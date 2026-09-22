@@ -18,15 +18,59 @@ dependencies = [
 [dependency-groups]
 dev = [
     'aiosqlite>=0.22.1',
-    "mypy>=2.3.1",
+    'mypy>=2.3.1',
     'pytest-asyncio>=1.4.0',
     'ruff>=0.16.8',
 ]
 
+[tool.alembic]
+script_location = '%(here)s/alembic'
+
+[[tool.alembic.post_write_hooks]]
+name = 'ruff_check'
+type = 'exec'
+executable = 'uv'
+options = 'run ruff check --fix REVISION_SCRIPT_FILENAME'
+
+[[tool.alembic.post_write_hooks]]
+name = 'ruff_format'
+type = 'exec'
+executable = 'uv'
+options = 'run ruff format REVISION_SCRIPT_FILENAME'
+
 [tool.fastapi]
 entrypoint = 'app.main:app'
+
+[tool.mypy]
+plugins = ['pydantic.mypy']
 
 [tool.pytest.ini_options]
 asyncio_mode = 'auto'
 asyncio_default_fixture_loop_scope = 'session'
 asyncio_default_test_loop_scope = 'session'
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.format]
+quote-style = 'preserve'
+indent-style = 'space'
+
+[tool.ruff.lint]
+select = [
+    'E',  # pycodestyle errors
+    'W',  # pycodestyle warnings
+    'F',  # pyflakes
+    'I',  # isort
+    'B',  # flake8-bugbear
+    'C4',  # flake8-comprehensions
+    'ASYNC', # flake8-async    
+    'UP',  # pyupgrade
+    'FAST',  # FastAPI
+]
+ignore = [
+    'E501',  # line too long, handled by black
+    'B008',  # do not perform function calls in argument defaults
+    'W191',  # indentation contains tabs
+    'B904',  # Allow raising exceptions without from e, for HTTPException
+]
