@@ -2,8 +2,9 @@ import uvicorn
 from fastapi import FastAPI
 
 from app.core.config import settings
+from app.core.database import lifespan
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 @app.get("/", tags=["Root"])
 async def root():
     return {"message": "Welcome to the API!"}
