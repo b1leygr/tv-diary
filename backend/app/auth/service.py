@@ -24,6 +24,7 @@ async def authenticate_user(db: AsyncSession, username: str, password: str) -> T
     access_token = create_access_token(sub=user.id)
     return Token(access_token=access_token, token_type='bearer')
 
+
 async def update_user_hash(db: AsyncSession, user: User, new_hash: str) -> None:
     user.hashed_password = new_hash
     db.add(user)

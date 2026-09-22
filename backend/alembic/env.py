@@ -1,5 +1,5 @@
-from app.core.config import settings # type: ignore  # noqa: I001
-from app.core.database import Base # type: ignore
+from app.core.config import settings  # type: ignore  # noqa: I001
+from app.core.database import Base  # type: ignore
 
 import asyncio
 import importlib
@@ -19,7 +19,9 @@ sys.path.insert(0, str(ROOT_DIR))
 src_path = ROOT_DIR / 'app'
 for path in src_path.rglob('*.py'):
     if path.is_file():
-        module_path = path.relative_to(ROOT_DIR).with_suffix('').as_posix().replace('/', '.')
+        module_path = (
+            path.relative_to(ROOT_DIR).with_suffix('').as_posix().replace('/', '.')
+        )
         try:
             importlib.import_module(module_path)
         except ImportError as e:
@@ -85,7 +87,9 @@ async def run_async_migrations() -> None:
 
     """
     configuration = config.get_section(config.config_ini_section, {})
-    configuration["sqlalchemy.url"] = config.get_main_option("sqlalchemy.url", settings.DATABASE_URL)
+    configuration["sqlalchemy.url"] = config.get_main_option(
+        "sqlalchemy.url", settings.DATABASE_URL
+    )
 
     connectable = async_engine_from_config(
         configuration,

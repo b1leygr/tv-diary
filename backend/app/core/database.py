@@ -9,6 +9,7 @@ from app.core.config import settings
 
 Base = declarative_base()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     engine = create_async_engine(settings.DATABASE_URL)
@@ -20,6 +21,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     yield
 
     await engine.dispose()
+
 
 async def get_db(request: Request) -> AsyncGenerator[AsyncSession]:
     session_factory = request.app.state.db_session_factory

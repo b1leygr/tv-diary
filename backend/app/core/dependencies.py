@@ -11,7 +11,10 @@ from app.users.models import User
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
 
-async def get_current_user(token: Annotated[dict, Depends(parse_jwt_token)], db: DbSession) -> User:
+
+async def get_current_user(
+    token: Annotated[dict, Depends(parse_jwt_token)], db: DbSession
+) -> User:
     user_id = token.get('sub')
     if not user_id:
         raise InvalidCredentials()
@@ -20,5 +23,6 @@ async def get_current_user(token: Annotated[dict, Depends(parse_jwt_token)], db:
     if not user:
         raise InvalidCredentials()
     return user
+
 
 CurrentUser = Annotated[User, Depends(get_current_user)]

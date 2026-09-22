@@ -11,9 +11,12 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(users_router)
 app.include_router(auth_router)
 init_exception_handlers(app)
-@app.get("/", tags=["Root"])
-async def root():
-    return {"message": "Welcome to the API!"}
 
-if __name__ == "__main__":
+
+@app.get('/', tags=['Root'])
+async def root():
+    return {'message': "Welcome to the API!"}
+
+
+if __name__ == '__main__':
     uvicorn.run(app, host=settings.HOST, port=settings.PORT)
