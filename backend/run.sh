@@ -18,6 +18,22 @@ dev() {
     uv run fastapi dev
 }
 
+## Runs integration tests against a containerised test database.
+test() {
+    trap 'docker compose --profile test down --remove-orphans; echo "Test database stopped."' EXIT
+
+    echo "Starting test database..."
+    echo "Waiting for test database to be ready..."    
+    docker compose --profile test up -d --wait test_db
+    echo "Test database is ready."
+
+    export POSTGRES_PORT=5433
+    export POSTGRES_DB=test_db
+
+    echo "Running integration tests..."
+    uv run pytest tests/integration "$@"
+}
+
 help() {
     echo "Usage: ./run.sh <command> [args...]"
     echo ""
@@ -45,7 +61,7 @@ COMMAND="$1"
 shift
 
 case "$COMMAND" in
-    dev|help)
+    dev|test|help)
         # Execute the function matching the command name
         "$COMMAND" "$@"
         ;;
