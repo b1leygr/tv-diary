@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     ALGORITHM: Literal['HS256', 'RS256', 'PS256', 'EdDSA', 'ES256'] = 'HS256'
     SECRET_KEY: str
     DUMMY_HASH: str
+    TMDB_AUTH: str
     HOST: str = 'localhost'
     PORT: int = 8000
     POSTGRES_USER: str
