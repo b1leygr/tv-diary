@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     ARRAY,
@@ -13,6 +14,9 @@ from sqlalchemy.ext.associationproxy import AssociationProxy, association_proxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.users.models import User
 
 
 class Show(Base):
@@ -93,6 +97,18 @@ class Episode(Base):
             "season_id", "episode_number", name="uq_season_episode_number"
         ),
     )
+
+
+class EpisodeLog(Base):
+    __tablename__ = 'episode_logs'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+    episode_id: Mapped[int] = mapped_column(ForeignKey('episodes.id'))
+    logged_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    episode: Mapped['Episode'] = relationship()
+    user: Mapped['User'] = relationship()
 
 
 class Actor(Base):
