@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Path, Query, status
 
 from app.core.dependencies import CurrentUser, DbSession
+from app.shows.schemas import UserLogSummary
 from app.users import service as user_service
 from app.users.models import User
 from app.users.schemas import UserCreate, UserResponse, UserUpdate
@@ -51,3 +52,8 @@ async def update_current_user(
 @router.delete('/me', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_current_user(current_user: CurrentUser, db: DbSession) -> None:
     return await user_service.delete_user(db, current_user)
+
+
+@router.get('/me/logs', response_model=list[UserLogSummary])
+async def get_current_user_logs(current_user: CurrentUser, db: DbSession):
+    return await user_service.get_current_user_log(db, current_user)

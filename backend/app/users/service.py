@@ -3,6 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_password_hash
+from app.shows.models import Episode, EpisodeLog, Season, Show
 from app.users.exceptions import ExistingUser, UserNotFound
 from app.users.models import User
 from app.users.schemas import UserCreate, UserUpdate
@@ -76,3 +77,23 @@ async def update_user(db: AsyncSession, user: User, user_update: UserUpdate) -> 
 async def delete_user(db: AsyncSession, user: User) -> None:
     await db.delete(user)
     await db.commit()
+
+
+async def get_current_user_log(db: AsyncSession, user: User):
+    stmt = (
+        select(
+            EpisodeLog.logged_at.label('logged_at'),
+            Episode.name.label('episode_name'),
+            Season.name.label('season_name'),
+            Show.name.label('show_name'),
+        )
+        .join(Episode, EpisodeLog.episode_id == Episode.id)
+        .join(Season, Season.id == Episode.season_id)
+        .join(Show, Show.id == Season.show_id)
+        .where(EpisodeLog.user_id == user.id)
+        .order_by(EpisodeLog.logged_at.desc())
+        .limit(10)
+    )
+    results = (await db.execute(stmt)).all()
+
+    return results

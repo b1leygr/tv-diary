@@ -1,7 +1,8 @@
 from asyncio import gather
 from datetime import datetime, timedelta
+from typing import Literal
 
-from sqlalchemy import select
+from sqlalchemy import case, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -12,41 +13,52 @@ from app.shows.models import (
     Creator,
     CreatorCredit,
     Episode,
+    EpisodeLog,
     Role,
     Season,
     Show,
 )
 from app.shows.schemas import (
+    EpisodeLogRequest,
     SeasonCreate,
     ShowCreate,
     ShowSearchRequest,
 )
+from app.users.models import User
 
 
-async def get_show(db: AsyncSession, tmdb_client: TmdbClient, show_id: int) -> Show:
-    query = (
-        select(Show)
-        .where(Show.id == show_id)
-        .options(
-            selectinload(Show.show_creators).selectinload(CreatorCredit.creator),
-            selectinload(Show.seasons)
-            .selectinload(Season.cast)
-            .selectinload(Role.actor),
-            selectinload(Show.seasons)
-            .selectinload(Season.episodes)
-            .selectinload(Episode.guest_stars)
-            .selectinload(Role.actor),
-        )
+async def get_show(
+    db: AsyncSession, user: User, tmdb_client: TmdbClient, show_id: int
+) -> Show:
+    eps_per_season = func.count(Episode.id).label('eps_per_season')
+
+    logged_eps_per_season = func.count(EpisodeLog.episode_id.distinct()).label(
+        'logged_eps_per_season'
     )
-    result = await db.execute(query)
-    cached_show = result.scalar_one_or_none()
 
-    if (
-        cached_show
-        and cached_show.last_updated.timestamp()
-        > (datetime.now() - timedelta(days=7)).timestamp()
-    ):
-        return cached_show
+    query = (
+        select(Show, Season.id, Season.name, logged_eps_per_season, eps_per_season)
+        .options(selectinload(Show.show_creators).selectinload(CreatorCredit.creator))
+        .join(Show.seasons)
+        .join(Season.episodes)
+        .outerjoin(
+            EpisodeLog,
+            ((EpisodeLog.episode_id == Episode.id) & (EpisodeLog.user_id == user.id)),
+        )
+        .where(Season.show_id == show_id)
+        .group_by(Show.id, Season.id)
+        .order_by(Show.name, Season.name)
+    )
+
+    result = (await db.execute(query)).all()
+    if result:
+        show = result[0][0]
+        if (
+            show.last_updated.timestamp()
+            > (datetime.now() - timedelta(days=7)).timestamp()
+        ):
+            show.seasons_with_progress = await parse_progress(result, 'seasons')
+            return show
 
     response = await tmdb_client.get(f'/tv/{show_id}')
     response.raise_for_status()
@@ -114,42 +126,72 @@ async def get_show(db: AsyncSession, tmdb_client: TmdbClient, show_id: int) -> S
 
     db.add(show_record)
     await db.commit()
-    show = (await db.execute(query)).scalar_one()
+
+    result = (await db.execute(query.execution_options(populate_existing=True))).all()
+
+    show = result[0][0]
+    show.seasons_with_progress = await parse_progress(result, 'seasons')
+
     return show
 
 
 async def get_season(
-    db: AsyncSession, show_id: int, season_number: int
-) -> Season | None:
+    db: AsyncSession, user: User, show_id: int, season_number: int
+) -> Season:
+    is_logged = case((func.max(EpisodeLog.id).isnot(None), True), else_=False).label(
+        'is_logged'
+    )
+
     stmt = (
-        select(Season)
-        .options(
-            selectinload(Season.cast).selectinload(Role.actor),
-            selectinload(Season.episodes)
-            .selectinload(Episode.guest_stars)
-            .selectinload(Role.actor),
+        select(Season, Episode.id, Episode.name, is_logged)
+        .options(selectinload(Season.cast).selectinload(Role.actor))
+        .join(Episode.season)
+        .outerjoin(
+            EpisodeLog,
+            ((EpisodeLog.episode_id == Episode.id) & (EpisodeLog.user_id == user.id)),
         )
-        .join(Season.show)
         .where(Season.show_id == show_id)
         .where(Season.season_number == season_number)
+        .group_by(Episode.id, Season.id)
+        .order_by(Episode.episode_number)
     )
-    season = (await db.execute(stmt)).scalar_one_or_none()
-    return season or None
+
+    result = (await db.execute(stmt)).all()
+    season = result[0][0]
+    season.episodes_with_progress = await parse_progress(result, 'episodes')
+
+    return season
 
 
 async def get_episode(
-    db: AsyncSession, show_id: int, season_number: int, episode_number: int
-) -> Episode | None:
+    db: AsyncSession,
+    user: User,
+    show_id: int,
+    season_number: int,
+    episode_number: int,
+) -> Episode:
+    is_logged = case((func.max(EpisodeLog.id).isnot(None), True), else_=False).label(
+        'is_logged'
+    )
+
     stmt = (
-        select(Episode)
+        select(Episode, is_logged)
         .options(selectinload(Episode.guest_stars).selectinload(Role.actor))
         .join(Episode.season)
+        .outerjoin(
+            EpisodeLog,
+            ((EpisodeLog.episode_id == Episode.id) & (EpisodeLog.user_id == user.id)),
+        )
         .where(Season.show_id == show_id)
         .where(Season.season_number == season_number)
         .where(Episode.episode_number == episode_number)
+        .group_by(Episode.id)
     )
-    episode = (await db.execute(stmt)).scalar_one_or_none()
-    return episode or None
+
+    result = (await db.execute(stmt)).one()
+    episode, is_logged = result
+    episode.is_logged = is_logged
+    return episode
 
 
 async def search_tmdb_show(tmdb_client: TmdbClient, query: ShowSearchRequest):
@@ -158,6 +200,44 @@ async def search_tmdb_show(tmdb_client: TmdbClient, query: ShowSearchRequest):
     results = response.json().get('results', [])[:10]
 
     return results
+
+
+async def log_episode(
+    db: AsyncSession, user: User, episode_log_request: EpisodeLogRequest
+) -> EpisodeLog:
+    stmt = select(Episode).where(Episode.id == episode_log_request.episode_id)
+    result = await db.execute(stmt)
+    episode_in_db = result.scalar_one_or_none()
+    if episode_in_db is None:
+        raise ValueError(None)
+    episode_log = EpisodeLog(
+        user=user, episode=episode_in_db, logged_at=episode_log_request.logged_at
+    )
+    db.add(episode_log)
+    await db.commit()
+    episode_log.episode_name = episode_log.episode.name
+    return episode_log
+
+
+async def parse_progress(result, type: Literal['seasons', 'episodes']):
+    if type == 'episodes':
+        episodes = []
+        for row in result:
+            episodes.append({'id': row[1], 'name': row[2], 'is_logged': row[3]})
+        return episodes
+
+    elif type == 'seasons':
+        seasons = []
+        for row in result:
+            seasons.append(
+                {
+                    'id': row[1],
+                    'name': row[2],
+                    'logged_eps': row[3],
+                    'total_eps': row[4],
+                }
+            )
+        return seasons
 
 
 async def get_tmdb_season(tmdb_client: TmdbClient, show_id: int, season_number: int):

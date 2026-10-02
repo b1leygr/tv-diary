@@ -2,9 +2,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
-from app.core.dependencies import DbSession, TmdbClient
+from app.core.dependencies import CurrentUser, DbSession, TmdbClient
 from app.shows import service as show_service
 from app.shows.schemas import (
+    EpisodeLogRequest,
+    EpisodeLogResponse,
     EpisodeResponse,
     SeasonResponse,
     ShowResponse,
@@ -30,18 +32,20 @@ async def search_shows(
 async def get_show(
     show_id: int,
     tmdb_client: TmdbClient,
+    user: CurrentUser,
     db: DbSession,
 ):
-    return await show_service.get_show(db, tmdb_client, show_id)
+    return await show_service.get_show(db, user, tmdb_client, show_id)
 
 
 @router.get('/{show_id}/seasons/{season_number}', response_model=SeasonResponse)
 async def get_season(
     show_id: int,
     season_number: int,
+    user: CurrentUser,
     db: DbSession,
 ):
-    return await show_service.get_season(db, show_id, season_number)
+    return await show_service.get_season(db, user, show_id, season_number)
 
 
 @router.get(
@@ -52,6 +56,18 @@ async def get_episode(
     show_id: int,
     season_number: int,
     episode_number: int,
+    user: CurrentUser,
     db: DbSession,
 ):
-    return await show_service.get_episode(db, show_id, season_number, episode_number)
+    return await show_service.get_episode(
+        db, user, show_id, season_number, episode_number
+    )
+
+
+@router.post('', response_model=EpisodeLogResponse)
+async def log_episode(
+    episode_log_request: EpisodeLogRequest,
+    user: CurrentUser,
+    db: DbSession,
+):
+    return await show_service.log_episode(db, user, episode_log_request)

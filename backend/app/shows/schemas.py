@@ -140,18 +140,32 @@ class ShowCreate(ShowBase):
 class EpisodeResponse(EpisodeBase):
     guest_stars: list[CastMemberResponse]
     season_id: int
+    is_logged: bool
     model_config = ConfigDict(from_attributes=True)
+
+
+class EpisodeSummary(BaseModel):
+    id: int
+    name: str | None
+    is_logged: bool
 
 
 class SeasonResponse(SeasonBase):
     cast: list[CastMemberResponse]
     show_id: int
-    episodes: list[EpisodeResponse]
+    episodes_with_progress: list[EpisodeSummary]
     model_config = ConfigDict(from_attributes=True)
 
 
+class SeasonSummary(BaseModel):
+    id: int
+    name: str | None
+    logged_eps: int
+    total_eps: int
+
+
 class ShowResponse(ShowBase):
-    seasons: list[SeasonResponse]
+    seasons_with_progress: list[SeasonSummary] | None
     last_updated: datetime
     model_config = ConfigDict(from_attributes=True)
 
@@ -172,3 +186,20 @@ class ShowSearchResult(BaseModel):
         first_air_date: str | None = data.get('first_air_date')
         data['year'] = int(first_air_date.split('-')[0]) if first_air_date else None
         return data
+
+
+class EpisodeLogRequest(BaseModel):
+    episode_id: int
+    logged_at: datetime | None
+
+
+class EpisodeLogResponse(EpisodeLogRequest):
+    episode_name: str
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserLogSummary(BaseModel):
+    logged_at: datetime
+    episode_name: str
+    season_name: str
+    show_name: str
