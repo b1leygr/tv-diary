@@ -19,7 +19,6 @@ from app.shows.models import (
     Show,
 )
 from app.shows.schemas import (
-    EpisodeLogRequest,
     SeasonCreate,
     ShowCreate,
     ShowSearchRequest,
@@ -199,16 +198,12 @@ async def search_tmdb_show(tmdb_client: TmdbClient, query: ShowSearchRequest):
 
 
 async def log_episode(
-    db: AsyncSession, user: User, episode_log_request: EpisodeLogRequest
+    db: AsyncSession, user: User, episode_id: int, logged_at: datetime | None
 ) -> EpisodeLog:
-    stmt = select(Episode).where(Episode.id == episode_log_request.episode_id)
+    stmt = select(Episode).where(Episode.id == episode_id)
     result = await db.execute(stmt)
-    episode_in_db = result.scalar_one_or_none()
-    if episode_in_db is None:
-        raise ValueError(None)
-    episode_log = EpisodeLog(
-        user=user, episode=episode_in_db, logged_at=episode_log_request.logged_at
-    )
+    episode_in_db = result.scalar_one()
+    episode_log = EpisodeLog(user=user, episode=episode_in_db, logged_at=logged_at)
     db.add(episode_log)
     await db.commit()
     episode_log.episode_name = episode_log.episode.name

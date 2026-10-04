@@ -188,12 +188,9 @@ class ShowSearchResult(BaseModel):
         return data
 
 
-class EpisodeLogRequest(BaseModel):
+class EpisodeLogResponse(BaseModel):
     episode_id: int
     logged_at: datetime | None
-
-
-class EpisodeLogResponse(EpisodeLogRequest):
     episode_name: str
     model_config = ConfigDict(from_attributes=True)
 

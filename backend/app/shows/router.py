@@ -1,11 +1,11 @@
+from datetime import datetime
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Body, Query
 
 from app.core.dependencies import CurrentUser, DbSession, TmdbClient
 from app.shows import service as show_service
 from app.shows.schemas import (
-    EpisodeLogRequest,
     EpisodeLogResponse,
     EpisodeResponse,
     EpisodeSummary,
@@ -60,10 +60,11 @@ async def get_episode(
     return await show_service.get_episode(db, user, episode_id)
 
 
-@router.post('/shows', response_model=EpisodeLogResponse)
+@router.post('/episodes/{episode_id}/logs', response_model=EpisodeLogResponse)
 async def log_episode(
-    episode_log_request: EpisodeLogRequest,
+    episode_id: int,
     user: CurrentUser,
     db: DbSession,
+    logged_at: Annotated[datetime | None, Body()] = None,
 ):
-    return await show_service.log_episode(db, user, episode_log_request)
+    return await show_service.log_episode(db, user, episode_id, logged_at)
