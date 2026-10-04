@@ -136,40 +136,39 @@ async def get_show(
 
 
 async def get_season(
-    db: AsyncSession, user: User, show_id: int, season_number: int
-) -> Season:
+    db: AsyncSession, user: User, season_id: int, view: str | None
+) -> Season | list[dict]:
     is_logged = case((func.max(EpisodeLog.id).isnot(None), True), else_=False).label(
         'is_logged'
     )
+    select_stmt = select(Episode.id, Episode.name, is_logged)
+    if view == 'full':
+        select_stmt = select_stmt.with_only_columns(
+            Season, *select_stmt.selected_columns
+        ).options(selectinload(Season.cast).selectinload(Role.actor))
 
     stmt = (
-        select(Season, Episode.id, Episode.name, is_logged)
-        .options(selectinload(Season.cast).selectinload(Role.actor))
-        .join(Episode.season)
+        select_stmt.join(Episode.season)
         .outerjoin(
             EpisodeLog,
             ((EpisodeLog.episode_id == Episode.id) & (EpisodeLog.user_id == user.id)),
         )
-        .where(Season.show_id == show_id)
-        .where(Season.season_number == season_number)
+        .where(Season.id == season_id)
         .group_by(Episode.id, Season.id)
         .order_by(Episode.episode_number)
     )
 
     result = (await db.execute(stmt)).all()
-    season = result[0][0]
-    season.episodes_with_progress = await parse_progress(result, 'episodes')
+    if view == 'full':
+        season = result[0][0]
+        season.episodes_with_progress = await parse_progress(result, 'episodes')
+        return season
+    else:
+        episodes_with_progress = await parse_progress(result, 'episodes')
+        return episodes_with_progress
 
-    return season
 
-
-async def get_episode(
-    db: AsyncSession,
-    user: User,
-    show_id: int,
-    season_number: int,
-    episode_number: int,
-) -> Episode:
+async def get_episode(db: AsyncSession, user: User, episode_id: int) -> Episode:
     is_logged = case((func.max(EpisodeLog.id).isnot(None), True), else_=False).label(
         'is_logged'
     )
@@ -177,14 +176,11 @@ async def get_episode(
     stmt = (
         select(Episode, is_logged)
         .options(selectinload(Episode.guest_stars).selectinload(Role.actor))
-        .join(Episode.season)
         .outerjoin(
             EpisodeLog,
             ((EpisodeLog.episode_id == Episode.id) & (EpisodeLog.user_id == user.id)),
         )
-        .where(Season.show_id == show_id)
-        .where(Season.season_number == season_number)
-        .where(Episode.episode_number == episode_number)
+        .where(Episode.id == episode_id)
         .group_by(Episode.id)
     )
 
@@ -223,7 +219,7 @@ async def parse_progress(result, type: Literal['seasons', 'episodes']):
     if type == 'episodes':
         episodes = []
         for row in result:
-            episodes.append({'id': row[1], 'name': row[2], 'is_logged': row[3]})
+            episodes.append({'id': row[-3], 'name': row[-2], 'is_logged': row[-1]})
         return episodes
 
     elif type == 'seasons':
