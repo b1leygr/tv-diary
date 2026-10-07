@@ -29,7 +29,7 @@ from app.users.models import User
 async def get_show(
     db: AsyncSession, user: User, tmdb_client: TmdbClient, show_id: int
 ) -> Show:
-    eps_per_season = func.count(Episode.id).label('eps_per_season')
+    eps_per_season = func.count(Episode.id.distinct()).label('eps_per_season')
 
     logged_eps_per_season = func.count(EpisodeLog.episode_id.distinct()).label(
         'logged_eps_per_season'
