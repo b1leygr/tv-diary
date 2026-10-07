@@ -6,11 +6,11 @@ import { routeTree } from './routeTree.gen';
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      				staleTime: 1000 * 60 * 5,
-				refetchOnWindowFocus: false,
-				retry: 1,
-			},
-		},
+      staleTime: 1000 * 60 * 5,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
 });
 
 export const router = createRouter({
@@ -18,22 +18,21 @@ export const router = createRouter({
   defaultPreload: 'intent',
   scrollRestoration: true,
   context: {
-		queryClient: queryClient,
+    queryClient: queryClient,
   },
 });
 
 client.setConfig({
-	baseUrl: import.meta.env.VITE_API_URL,
+  baseUrl: import.meta.env.VITE_API_URL,
   throwOnError: true,
   auth: () => {
     const token = localStorage.getItem('token');
-    return token ?? ''; 
+    return token ?? '';
   },
 });
 
-
 declare module '@tanstack/react-router' {
-	interface Register {
-		router: typeof router;
-	}
+  interface Register {
+    router: typeof router;
+  }
 }
