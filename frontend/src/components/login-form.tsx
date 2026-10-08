@@ -9,7 +9,8 @@ import {
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useMutation } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { toast } from 'react-hot-toast';
 import { type BodyLogin, login } from '#/client';
 
 export function LoginForm() {
@@ -20,14 +21,19 @@ export function LoginForm() {
     },
   });
 
+  const navigate = useNavigate();
+
   const loginMutation = useMutation({
     mutationFn: (credentials: BodyLogin) => login({ body: credentials }),
     onSuccess: ({ data }) => {
       localStorage.setItem('token', data?.access_token || '');
       console.log('Login successful, token stored:', data?.access_token);
+      toast.success('Login successful!');
+      navigate({ to: '/search', search: { query: '' } });
     },
     onError: (error) => {
       console.error('Login failed:', error);
+      toast.error('Login failed!');
     },
   });
 

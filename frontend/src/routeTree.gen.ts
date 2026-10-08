@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as SearchRouteImport } from './routes/search'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as EpisodesIdRouteImport } from './routes/episodes.$id'
 import { Route as SeasonsIdRouteImport } from './routes/seasons.$id'
@@ -24,6 +25,11 @@ const IndexRoute = IndexRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -50,6 +56,7 @@ const ShowsIdRoute = ShowsIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/episodes/$id': typeof EpisodesIdRoute
   '/seasons/$id': typeof SeasonsIdRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/episodes/$id': typeof EpisodesIdRoute
   '/seasons/$id': typeof SeasonsIdRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
   '/episodes/$id': typeof EpisodesIdRoute
   '/seasons/$id': typeof SeasonsIdRoute
@@ -75,14 +84,27 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/login' | '/signup' | '/episodes/$id' | '/seasons/$id' | '/shows/$id'
+    | '/'
+    | '/login'
+    | '/search'
+    | '/signup'
+    | '/episodes/$id'
+    | '/seasons/$id'
+    | '/shows/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/login' | '/signup' | '/episodes/$id' | '/seasons/$id' | '/shows/$id'
+    | '/'
+    | '/login'
+    | '/search'
+    | '/signup'
+    | '/episodes/$id'
+    | '/seasons/$id'
+    | '/shows/$id'
   id:
     | '__root__'
     | '/'
     | '/login'
+    | '/search'
     | '/signup'
     | '/episodes/$id'
     | '/seasons/$id'
@@ -92,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
+  SearchRoute: typeof SearchRoute
   SignupRoute: typeof SignupRoute
   EpisodesIdRoute: typeof EpisodesIdRoute
   SeasonsIdRoute: typeof SeasonsIdRoute
@@ -112,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -148,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
+  SearchRoute: SearchRoute,
   SignupRoute: SignupRoute,
   EpisodesIdRoute: EpisodesIdRoute,
   SeasonsIdRoute: SeasonsIdRoute,
