@@ -140,6 +140,9 @@ class ShowCreate(ShowBase):
 class EpisodeResponse(EpisodeBase):
     guest_stars: list[CastMemberResponse]
     season_id: int
+    season_name: str
+    show_id: int
+    show_name: str
     is_logged: bool
     model_config = ConfigDict(from_attributes=True)
 
@@ -153,6 +156,7 @@ class EpisodeSummary(BaseModel):
 class SeasonResponse(SeasonBase):
     cast: list[CastMemberResponse]
     show_id: int
+    show_name: str
     episodes_with_progress: list[EpisodeSummary]
     model_config = ConfigDict(from_attributes=True)
 

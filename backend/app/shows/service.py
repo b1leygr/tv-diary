@@ -5,7 +5,7 @@ from typing import Literal
 from sqlalchemy import case, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import InstrumentedAttribute, selectinload
 
 from app.core.dependencies import TmdbClient
 from app.shows.models import (
@@ -141,25 +141,35 @@ async def get_season(
         'is_logged'
     )
     select_stmt = select(Episode.id, Episode.name, is_logged)
+    group_target: tuple[InstrumentedAttribute, ...] = Episode.id, Season.id
+
     if view == 'full':
-        select_stmt = select_stmt.with_only_columns(
-            Season, *select_stmt.selected_columns
-        ).options(selectinload(Season.cast).selectinload(Role.actor))
+        select_stmt = (
+            select_stmt.with_only_columns(
+                Season, Show.name.label('show_name'), *select_stmt.selected_columns
+            )
+            .options(selectinload(Season.cast).selectinload(Role.actor))
+            .join(Show)
+            .join(Episode)
+        )
+        group_target = (*group_target, Show.name)
+    elif view == 'progress':
+        select_stmt = select_stmt.join(Episode.season)
 
     stmt = (
-        select_stmt.join(Episode.season)
-        .outerjoin(
+        select_stmt.outerjoin(
             EpisodeLog,
             ((EpisodeLog.episode_id == Episode.id) & (EpisodeLog.user_id == user.id)),
         )
         .where(Season.id == season_id)
-        .group_by(Episode.id, Season.id)
+        .group_by(*group_target)
         .order_by(Episode.episode_number)
     )
 
     result = (await db.execute(stmt)).all()
     if view == 'full':
         season = result[0][0]
+        season.show_name = result[0][1]
         season.episodes_with_progress = await parse_progress(result, 'episodes')
         return season
     else:
@@ -173,19 +183,29 @@ async def get_episode(db: AsyncSession, user: User, episode_id: int) -> Episode:
     )
 
     stmt = (
-        select(Episode, is_logged)
+        select(
+            Episode,
+            Season.name.label('season_name'),
+            Show.id.label('show_id'),
+            Show.name.label('show_name'),
+            is_logged,
+        )
+        .join(Season, Season.id == Episode.season_id)
+        .join(Show, Show.id == Season.show_id)
         .options(selectinload(Episode.guest_stars).selectinload(Role.actor))
         .outerjoin(
             EpisodeLog,
             ((EpisodeLog.episode_id == Episode.id) & (EpisodeLog.user_id == user.id)),
         )
         .where(Episode.id == episode_id)
-        .group_by(Episode.id)
+        .group_by(Episode.id, Season.name, Show.id, Show.name)
     )
 
     result = (await db.execute(stmt)).one()
-    episode, is_logged = result
-    episode.is_logged = is_logged
+    episode, *attrs = result
+    await update_object(
+        episode, ['season_name', 'show_id', 'show_name', 'is_logged'], attrs
+    )
     return episode
 
 
@@ -237,3 +257,8 @@ async def get_tmdb_season(tmdb_client: TmdbClient, show_id: int, season_number: 
     )
     response.raise_for_status()
     return response.json()
+
+
+async def update_object(object, keys: list[str], attrs: list):
+    for key, val in zip(keys, attrs, strict=True):
+        setattr(object, key, val)
