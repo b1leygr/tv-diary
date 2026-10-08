@@ -155,6 +155,18 @@ export type EpisodeResponse = {
      */
     season_id: number;
     /**
+     * Season Name
+     */
+    season_name: string;
+    /**
+     * Show Id
+     */
+    show_id: number;
+    /**
+     * Show Name
+     */
+    show_name: string;
+    /**
      * Is Logged
      */
     is_logged: boolean;
@@ -228,6 +240,10 @@ export type SeasonResponse = {
      * Show Id
      */
     show_id: number;
+    /**
+     * Show Name
+     */
+    show_name: string;
     /**
      * Episodes With Progress
      */
@@ -493,6 +509,18 @@ export type EpisodeResponseWritable = {
      */
     season_id: number;
     /**
+     * Season Name
+     */
+    season_name: string;
+    /**
+     * Show Id
+     */
+    show_id: number;
+    /**
+     * Show Name
+     */
+    show_name: string;
+    /**
      * Is Logged
      */
     is_logged: boolean;
@@ -538,6 +566,10 @@ export type SeasonResponseWritable = {
      * Show Id
      */
     show_id: number;
+    /**
+     * Show Name
+     */
+    show_name: string;
     /**
      * Episodes With Progress
      */
