@@ -12,6 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as EpisodesIdRouteImport } from './routes/episodes.$id'
+import { Route as SeasonsIdRouteImport } from './routes/seasons.$id'
+import { Route as ShowsIdRouteImport } from './routes/shows.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +31,71 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EpisodesIdRoute = EpisodesIdRouteImport.update({
+  id: '/episodes/$id',
+  path: '/episodes/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SeasonsIdRoute = SeasonsIdRouteImport.update({
+  id: '/seasons/$id',
+  path: '/seasons/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShowsIdRoute = ShowsIdRouteImport.update({
+  id: '/shows/$id',
+  path: '/shows/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/episodes/$id': typeof EpisodesIdRoute
+  '/seasons/$id': typeof SeasonsIdRoute
+  '/shows/$id': typeof ShowsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/episodes/$id': typeof EpisodesIdRoute
+  '/seasons/$id': typeof SeasonsIdRoute
+  '/shows/$id': typeof ShowsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/episodes/$id': typeof EpisodesIdRoute
+  '/seasons/$id': typeof SeasonsIdRoute
+  '/shows/$id': typeof ShowsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/signup'
+  fullPaths:
+    '/' | '/login' | '/signup' | '/episodes/$id' | '/seasons/$id' | '/shows/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/signup'
-  id: '__root__' | '/' | '/login' | '/signup'
+  to:
+    '/' | '/login' | '/signup' | '/episodes/$id' | '/seasons/$id' | '/shows/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/signup'
+    | '/episodes/$id'
+    | '/seasons/$id'
+    | '/shows/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  EpisodesIdRoute: typeof EpisodesIdRoute
+  SeasonsIdRoute: typeof SeasonsIdRoute
+  ShowsIdRoute: typeof ShowsIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +121,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/episodes/$id': {
+      id: '/episodes/$id'
+      path: '/episodes/$id'
+      fullPath: '/episodes/$id'
+      preLoaderRoute: typeof EpisodesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/seasons/$id': {
+      id: '/seasons/$id'
+      path: '/seasons/$id'
+      fullPath: '/seasons/$id'
+      preLoaderRoute: typeof SeasonsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shows/$id': {
+      id: '/shows/$id'
+      path: '/shows/$id'
+      fullPath: '/shows/$id'
+      preLoaderRoute: typeof ShowsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +149,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  EpisodesIdRoute: EpisodesIdRoute,
+  SeasonsIdRoute: SeasonsIdRoute,
+  ShowsIdRoute: ShowsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
