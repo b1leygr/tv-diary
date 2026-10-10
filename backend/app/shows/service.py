@@ -117,11 +117,22 @@ async def get_show(
 
         show_record.seasons.append(season_record)
 
-    creators = [
-        Creator(**creator.model_dump()) for creator in parsed_show_data.creators
-    ]
-    db.add_all(creators)
-    show_record.creators.extend(creators)
+    creators = {
+        creator.id: creator.model_dump() for creator in parsed_show_data.creators
+    }
+
+    if creators:
+        stmt = insert(Creator)
+        upsert_stmt = stmt.on_conflict_do_update(
+            index_elements=['id'], set_={'name': stmt.excluded.name}
+        ).returning(Creator)
+        unique_creators = (await db.scalars(upsert_stmt, list(creators.values()))).all()
+        creator_map = {creator.id: creator for creator in unique_creators}
+
+    show_record.show_creators.extend(
+        CreatorCredit(creator=creator_map[creator.id])
+        for creator in parsed_show_data.creators
+    )
 
     db.add(show_record)
     await db.commit()
