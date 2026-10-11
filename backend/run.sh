@@ -20,15 +20,7 @@ dev() {
 
 ## Runs integration tests against a containerised test database.
 test() {
-    trap 'docker compose --profile test down --remove-orphans; echo "Test database stopped."' EXIT
-
-    echo "Starting test database..."
-    echo "Waiting for test database to be ready..."    
-    docker compose --profile test up -d --wait test_db
-    echo "Test database is ready."
-
-    export POSTGRES_PORT=5433
-    export POSTGRES_DB=test_db
+    trap 'echo "Tests completed."' EXIT
 
     echo "Running integration tests..."
     uv run pytest tests/integration "$@"

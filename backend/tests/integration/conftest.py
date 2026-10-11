@@ -4,6 +4,8 @@ import pytest
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio.engine import AsyncEngine
+from testcontainers.community.postgres import PostgresContainer
 
 from alembic import command
 from app.core.config import settings
@@ -14,23 +16,39 @@ from app.users.models import User
 
 
 @pytest.fixture(scope='session', autouse=True)
+def db_container():
+    postgres = PostgresContainer('postgres:18-alpine')
+    postgres.start()
+
+    settings.POSTGRES_HOST = postgres.get_container_host_ip()
+    settings.POSTGRES_PORT = postgres.get_exposed_port(postgres.port)
+    settings.POSTGRES_USER = postgres.username
+    settings.POSTGRES_PASSWORD = postgres.password
+    settings.POSTGRES_DB = postgres.dbname
+
+    yield postgres
+
+    postgres.stop()
+
+
+@pytest.fixture(scope='session', autouse=True)
 def setup_database():
     alembic_cfg = Config('alembic.ini')
     alembic_cfg.set_main_option('sqlalchemy.url', settings.DATABASE_URL)
     command.upgrade(alembic_cfg, 'head')
     yield
-    command.downgrade(alembic_cfg, 'base')
 
 
 @pytest.fixture(scope='session')
 async def test_engine():
+    print(settings.DATABASE_URL)
     engine = create_async_engine(settings.DATABASE_URL, echo=True)
     yield engine
     await engine.dispose()
 
 
 @pytest.fixture(scope='function')
-async def db_session(test_engine) -> AsyncGenerator[AsyncSession]:
+async def db_session(test_engine: AsyncEngine) -> AsyncGenerator[AsyncSession]:
     async with test_engine.connect() as connection:
         transaction = await connection.begin()
 
