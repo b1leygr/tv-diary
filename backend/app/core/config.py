@@ -8,13 +8,12 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file='../.env', extra='ignore')
+    ALLOWED_ORIGINS: list[str] = ['http://localhost:3000', 'http://localhost:5173']
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     ALGORITHM: Literal['HS256', 'RS256', 'PS256', 'EdDSA', 'ES256'] = 'HS256'
     SECRET_KEY: str
     DUMMY_HASH: str
     TMDB_AUTH: str
-    HOST: str = 'localhost'
-    PORT: int = 8000
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_HOST: str = 'localhost'
