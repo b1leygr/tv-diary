@@ -12,7 +12,7 @@ import {
 } from '@mantine/core';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, Tags } from 'lucide-react';
 import { getShowOptions } from '#/client/@tanstack/react-query.gen';
 
 export function ShowDetails() {
@@ -20,6 +20,27 @@ export function ShowDetails() {
   const { data } = useSuspenseQuery(
     getShowOptions({ path: { show_id: Number(id) } }),
   );
+  const cards = data.creators.map((item) => (
+    <Card
+      key={item.id}
+      shadow="sm"
+      radius="md"
+      withBorder
+      w={160}
+      style={{ flexShrink: 0 }}
+    >
+      <Card.Section>
+        <AspectRatio ratio={2 / 3}>
+          <Image
+            src={`https://image.tmdb.org/t/p/original/${item.profile_path}`}
+          />
+        </AspectRatio>
+      </Card.Section>
+      <Text size="sm" c="dimmed" mt="xs" mb="md">
+        {item.name}
+      </Text>
+    </Card>
+  ));
 
   const seasons = (data.seasons_with_progress ?? []).map((item) => (
     <Card withBorder key={item.id}>
@@ -56,6 +77,8 @@ export function ShowDetails() {
               {data.status === 'Returning Series'
                 ? 'Ongoing'
                 : `${data?.first_air_date} — ${data?.last_air_date}`}
+              <Tags className="size-4" />
+              {data.genres.join(', ')}
             </Group>
             <Divider miw={850} />
             <Title order={3}>Overview</Title>
@@ -63,6 +86,17 @@ export function ShowDetails() {
               {data.overview ? data.overview : 'No overview available...'}
             </Text>
           </Stack>
+        </Group>
+        <Title order={3} p={'md'} ml={'-md'}>
+          Creators
+        </Title>
+        <Group
+          wrap={'nowrap'}
+          p={'md'}
+          style={{ overflowX: 'auto' }}
+          align="stretch"
+        >
+          {cards}
         </Group>
         <Stack>{seasons}</Stack>
       </Stack>
