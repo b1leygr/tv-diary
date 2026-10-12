@@ -15,6 +15,55 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-      
+
+  migrations:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    image: backend:latest
+    volumes:
+      - ./backend:/app
+      - /app/.venv        
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:?"Variable not set"}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?"Variable not set"}
+      - POSTGRES_DB=${POSTGRES_DB:?"Variable not set"}
+      - POSTGRES_HOST=db
+      - SECRET_KEY=${SECRET_KEY:?"Variable not set"}
+      - DUMMY_HASH=${DUMMY_HASH:?"Variable not set"}
+      - TMDB_AUTH=${TMDB_AUTH:?"Variable not set"}      
+    command: ['alembic', 'upgrade', 'head']
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    image: backend:latest
+    restart: always
+    ports:
+      - '8000:8000'
+    volumes:
+      - ./backend:/app
+      - /app/.venv
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:?"Variable not set"}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?"Variable not set"}
+      - POSTGRES_DB=${POSTGRES_DB:?"Variable not set"}
+      - POSTGRES_HOST=db
+      - SECRET_KEY=${SECRET_KEY:?"Variable not set"}
+      - DUMMY_HASH=${DUMMY_HASH:?"Variable not set"}
+      - TMDB_AUTH=${TMDB_AUTH:?"Variable not set"}
+    command: ['uvicorn', 'app.main:app', '--host', '0.0.0.0', '--port', '8000', '--reload']
+    depends_on:
+      db:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+
 volumes:
   postgres_data:
