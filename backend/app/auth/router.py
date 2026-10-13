@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.auth import service as auth_service
@@ -10,7 +10,7 @@ from app.core.dependencies import DbSession
 router = APIRouter(prefix='/sessions', tags=['auth'])
 
 
-@router.post('')
+@router.post('', responses={status.HTTP_401_UNAUTHORIZED: {}})
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: DbSession
 ) -> Token:
