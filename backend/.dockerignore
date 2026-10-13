@@ -1,6 +1,6 @@
 .venv/
-.mypy_cache/
+**/.mypy_cache/
 .pytest_cache/
 .ruff_cache
-__pycache__/
-*.pyc
+**/__pycache__/
+**/*.py[codz]
