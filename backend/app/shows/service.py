@@ -4,10 +4,17 @@ from typing import Literal
 
 from sqlalchemy import case, func, select
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute, selectinload
 
 from app.core.dependencies import TmdbClient
+from app.shows.exceptions import (
+    EpisodeNotFound,
+    SeasonNotFound,
+    ShowNotFound,
+    TmdbClientError,
+)
 from app.shows.models import (
     Actor,
     Creator,
@@ -60,7 +67,7 @@ async def get_show(
             return show
 
     response = await tmdb_client.get(f'/tv/{show_id}')
-    response.raise_for_status()
+    await resolve_tmdb_response(response, type='show')
     data = response.json()
 
     parsed_show_data = ShowCreate.model_validate(data)
@@ -178,6 +185,10 @@ async def get_season(
     )
 
     result = (await db.execute(stmt)).all()
+
+    if not result:
+        raise SeasonNotFound(season_id=season_id)
+
     if view == 'full':
         season = result[0][0]
         season.show_name = result[0][1]
@@ -212,7 +223,11 @@ async def get_episode(db: AsyncSession, user: User, episode_id: int) -> Episode:
         .group_by(Episode.id, Season.name, Show.id, Show.name)
     )
 
-    result = (await db.execute(stmt)).one()
+    try:
+        result = (await db.execute(stmt)).one()
+    except NoResultFound:
+        raise EpisodeNotFound(episode_id=episode_id)
+
     episode, *attrs = result
     await update_object(
         episode, ['season_name', 'show_id', 'show_name', 'is_logged'], attrs
@@ -222,7 +237,7 @@ async def get_episode(db: AsyncSession, user: User, episode_id: int) -> Episode:
 
 async def search_tmdb_show(tmdb_client: TmdbClient, query: ShowSearchRequest):
     response = await tmdb_client.get('search/tv', params={'query': query.name})
-    response.raise_for_status()
+    await resolve_tmdb_response(response, type='show')
     results = response.json().get('results', [])[:10]
 
     return results
@@ -232,8 +247,12 @@ async def log_episode(
     db: AsyncSession, user: User, episode_id: int, logged_at: datetime | None
 ) -> EpisodeLog:
     stmt = select(Episode).where(Episode.id == episode_id)
-    result = await db.execute(stmt)
-    episode_in_db = result.scalar_one()
+
+    try:
+        episode_in_db = (await db.execute(stmt)).scalar_one()
+    except NoResultFound:
+        raise EpisodeNotFound(episode_id=episode_id)
+
     episode_log = EpisodeLog(user=user, episode=episode_in_db, logged_at=logged_at)
     db.add(episode_log)
     await db.commit()
@@ -266,10 +285,35 @@ async def get_tmdb_season(tmdb_client: TmdbClient, show_id: int, season_number: 
     response = await tmdb_client.get(
         f'/tv/{show_id}/season/{season_number}?append_to_response=credits'
     )
-    response.raise_for_status()
+    await resolve_tmdb_response(response)
     return response.json()
 
 
 async def update_object(object, keys: list[str], attrs: list):
     for key, val in zip(keys, attrs, strict=True):
         setattr(object, key, val)
+
+
+async def resolve_tmdb_response(
+    response, type: Literal['show', 'season'] | None = None
+):
+    if response.status_code == 404:
+        if type == 'show':
+            raise ShowNotFound(show_id=response.url.path.split('/')[-1])
+        elif type == 'season':
+            raise SeasonNotFound(season_id=response.url.path.split('/')[-1])
+    elif response.status_code in [500, 502]:
+        raise TmdbClientError(
+            status_code=502,
+            message="The TMDB API encountered an error and could not fulfill the request.",
+        )
+    elif response.status_code == 503:
+        raise TmdbClientError(
+            status_code=503,
+            message="The TMDB API is currently unavailable. Please try again later.",
+        )
+    elif response.status_code == 504:
+        raise TmdbClientError(
+            status_code=504,
+            message="The TMDB API request timed out. Please try again later.",
+        )
