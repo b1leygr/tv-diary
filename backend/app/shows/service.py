@@ -2,7 +2,7 @@ from asyncio import gather
 from datetime import datetime, timedelta
 from typing import Literal
 
-from sqlalchemy import case, func, select
+from sqlalchemy import Integer, case, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -53,7 +53,7 @@ async def get_show(
         )
         .where(Season.show_id == show_id)
         .group_by(Show.id, Season.id)
-        .order_by(Show.name, Season.name)
+        .order_by(Show.name, *(await sort_collection(Season.name)))
     )
 
     result = (await db.execute(query)).all()
@@ -317,3 +317,18 @@ async def resolve_tmdb_response(
             status_code=504,
             message="The TMDB API request timed out. Please try again later.",
         )
+
+
+async def sort_collection(column):
+    prefix = func.regexp_replace(column, r'(\d+$)', '')
+    digits = func.substring(column, r'(\d+)$')
+    ends_with_digits = column.op('~')(r'\d+$')
+
+    return [
+        prefix,
+        case(
+            (ends_with_digits, func.cast(digits, Integer)),
+            else_=0,
+        ),
+        column,
+    ]
