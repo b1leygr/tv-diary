@@ -497,9 +497,9 @@ export type ProblemDetails = {
      */
     instance?: string | null;
     /**
-     * Errors
+     * Invalid Params
      */
-    errors?: Array<ValidationErrorDetail> | null;
+    invalid_params?: Array<ValidationErrorDetail> | null;
 };
 
 /**

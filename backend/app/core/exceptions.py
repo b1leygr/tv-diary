@@ -25,7 +25,7 @@ class ProblemDetails(BaseModel):
     status: int
     detail: str | None = None
     instance: str | None = None
-    errors: list[ValidationErrorDetail] | None = None
+    invalid_params: list[ValidationErrorDetail] | None = None
 
 
 RFCHEADER = {"Content-Type": "application/problem+json"}
@@ -53,7 +53,7 @@ ERROR_EXAMPLES = {
             "status": 422,
             "detail": "The request payload contains validation errors.",
             "instance": "/users/12345",
-            "invalid-params": [
+            "invalid_params": [
                 {
                     "name": "username",
                     "reason": "String should have at least 3 characters.",
@@ -135,7 +135,7 @@ def init_exception_handlers(app):
                 "status": 422,
                 "detail": "The request payload contains validation errors.",
                 "instance": str(request.url.path),
-                "invalid-params": error_messages,
+                "invalid_params": error_messages,
             },
         )
 
