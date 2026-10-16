@@ -1,5 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import { createRouter } from '@tanstack/react-router';
+import type { ProblemDetails } from '#/client';
 import { client } from '@/client/client.gen';
 import { routeTree } from './routeTree.gen';
 
@@ -34,5 +35,11 @@ client.setConfig({
 declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router;
+  }
+}
+
+declare module '@tanstack/react-query' {
+  interface Register {
+    defaultError: ProblemDetails;
   }
 }
