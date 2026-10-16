@@ -47,6 +47,14 @@ ERROR_EXAMPLES = {
             "instance": "/shows/12345",
         }
     },
+    409: {
+        "value": {
+            "title": "User Already Exists",
+            "status": 409,
+            "detail": "User with username 'jane_doe' already exists.",
+            "instance": "/users",
+        },
+    },
     422: {
         "value": {
             "title": "Validation Error",

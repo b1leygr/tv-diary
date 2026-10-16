@@ -679,6 +679,10 @@ export type CreateUserData = {
 
 export type CreateUserErrors = {
     /**
+     * Conflict
+     */
+    409: ProblemDetails;
+    /**
      * Unprocessable Content
      */
     422: ProblemDetails;

@@ -15,7 +15,12 @@ router = APIRouter(
 )
 
 
-@router.post('', response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    '',
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses={status.HTTP_409_CONFLICT: {}},
+)
 async def create_user(user_data: UserCreate, db: DbSession) -> User:
     return await user_service.create_user(db, user_data)
 
