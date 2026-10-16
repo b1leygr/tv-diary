@@ -141,6 +141,7 @@ class EpisodeResponse(EpisodeBase):
     guest_stars: list[CastMemberResponse]
     season_id: int
     season_name: str
+    season_poster_path: str | None
     show_id: int
     show_name: str
     is_logged: bool
@@ -157,6 +158,7 @@ class SeasonResponse(SeasonBase):
     cast: list[CastMemberResponse]
     show_id: int
     show_name: str
+    show_backdrop_path: str | None
     episodes_with_progress: list[EpisodeSummary]
     model_config = ConfigDict(from_attributes=True)
 

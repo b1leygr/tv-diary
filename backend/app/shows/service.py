@@ -164,13 +164,16 @@ async def get_season(
     if view == 'full':
         select_stmt = (
             select_stmt.with_only_columns(
-                Season, Show.name.label('show_name'), *select_stmt.selected_columns
+                Season,
+                Show.name.label('show_name'),
+                Show.backdrop_path.label('show_backdrop_path'),
+                *select_stmt.selected_columns,
             )
             .options(selectinload(Season.cast).selectinload(Role.actor))
             .join(Show)
             .join(Episode)
         )
-        group_target = (*group_target, Show.name)
+        group_target = (*group_target, Show.name, Show.backdrop_path)
     elif view == 'progress':
         select_stmt = select_stmt.join(Episode.season)
 
@@ -192,6 +195,7 @@ async def get_season(
     if view == 'full':
         season = result[0][0]
         season.show_name = result[0][1]
+        season.show_backdrop_path = result[0][2]
         season.episodes_with_progress = await parse_progress(result, 'episodes')
         return season
     else:
@@ -208,6 +212,7 @@ async def get_episode(db: AsyncSession, user: User, episode_id: int) -> Episode:
         select(
             Episode,
             Season.name.label('season_name'),
+            Season.poster_path.label('season_poster_path'),
             Show.id.label('show_id'),
             Show.name.label('show_name'),
             is_logged,
@@ -220,7 +225,13 @@ async def get_episode(db: AsyncSession, user: User, episode_id: int) -> Episode:
             ((EpisodeLog.episode_id == Episode.id) & (EpisodeLog.user_id == user.id)),
         )
         .where(Episode.id == episode_id)
-        .group_by(Episode.id, Season.name, Show.id, Show.name)
+        .group_by(
+            Episode.id,
+            Season.name,
+            Season.poster_path,
+            Show.id,
+            Show.name,
+        )
     )
 
     try:
@@ -230,7 +241,15 @@ async def get_episode(db: AsyncSession, user: User, episode_id: int) -> Episode:
 
     episode, *attrs = result
     await update_object(
-        episode, ['season_name', 'show_id', 'show_name', 'is_logged'], attrs
+        episode,
+        [
+            'season_name',
+            'season_poster_path',
+            'show_id',
+            'show_name',
+            'is_logged',
+        ],
+        attrs,
     )
     return episode
 

@@ -159,6 +159,10 @@ export type EpisodeResponse = {
      */
     season_name: string;
     /**
+     * Season Poster Path
+     */
+    season_poster_path: string | null;
+    /**
      * Show Id
      */
     show_id: number;
@@ -244,6 +248,10 @@ export type SeasonResponse = {
      * Show Name
      */
     show_name: string;
+    /**
+     * Show Backdrop Path
+     */
+    show_backdrop_path: string | null;
     /**
      * Episodes With Progress
      */
@@ -553,6 +561,10 @@ export type EpisodeResponseWritable = {
      */
     season_name: string;
     /**
+     * Season Poster Path
+     */
+    season_poster_path: string | null;
+    /**
      * Show Id
      */
     show_id: number;
@@ -610,6 +622,10 @@ export type SeasonResponseWritable = {
      * Show Name
      */
     show_name: string;
+    /**
+     * Show Backdrop Path
+     */
+    show_backdrop_path: string | null;
     /**
      * Episodes With Progress
      */
