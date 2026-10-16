@@ -455,6 +455,46 @@ export type ValidationError = {
 };
 
 /**
+ * ValidationErrorDetail
+ */
+export type ValidationErrorDetail = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Reason
+     */
+    reason: string;
+};
+
+/**
+ * ProblemDetails
+ */
+export type ProblemDetails = {
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Status
+     */
+    status: number;
+    /**
+     * Detail
+     */
+    detail?: string | null;
+    /**
+     * Instance
+     */
+    instance?: string | null;
+    /**
+     * Errors
+     */
+    errors?: Array<ValidationErrorDetail> | null;
+};
+
+/**
  * CastMemberResponse
  */
 export type CastMemberResponseWritable = {
@@ -592,9 +632,13 @@ export type GetUsersData = {
 
 export type GetUsersErrors = {
     /**
-     * Validation Error
+     * Unprocessable Content
      */
-    422: HttpValidationError;
+    422: ProblemDetails;
+    /**
+     * Internal Server Error
+     */
+    500: ProblemDetails;
 };
 
 export type GetUsersError = GetUsersErrors[keyof GetUsersErrors];
@@ -619,9 +663,13 @@ export type CreateUserData = {
 
 export type CreateUserErrors = {
     /**
-     * Validation Error
+     * Unprocessable Content
      */
-    422: HttpValidationError;
+    422: ProblemDetails;
+    /**
+     * Internal Server Error
+     */
+    500: ProblemDetails;
 };
 
 export type CreateUserError = CreateUserErrors[keyof CreateUserErrors];
@@ -630,7 +678,7 @@ export type CreateUserResponses = {
     /**
      * Successful Response
      */
-    200: UserResponse;
+    201: UserResponse;
 };
 
 export type CreateUserResponse = CreateUserResponses[keyof CreateUserResponses];
@@ -641,6 +689,19 @@ export type DeleteCurrentUserData = {
     query?: never;
     url: '/users/me';
 };
+
+export type DeleteCurrentUserErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ProblemDetails;
+    /**
+     * Internal Server Error
+     */
+    500: ProblemDetails;
+};
+
+export type DeleteCurrentUserError = DeleteCurrentUserErrors[keyof DeleteCurrentUserErrors];
 
 export type DeleteCurrentUserResponses = {
     /**
@@ -657,6 +718,19 @@ export type GetCurrentUserData = {
     query?: never;
     url: '/users/me';
 };
+
+export type GetCurrentUserErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ProblemDetails;
+    /**
+     * Internal Server Error
+     */
+    500: ProblemDetails;
+};
+
+export type GetCurrentUserError = GetCurrentUserErrors[keyof GetCurrentUserErrors];
 
 export type GetCurrentUserResponses = {
     /**
@@ -676,9 +750,17 @@ export type UpdateCurrentUserData = {
 
 export type UpdateCurrentUserErrors = {
     /**
-     * Validation Error
+     * Unauthorized
      */
-    422: HttpValidationError;
+    401: ProblemDetails;
+    /**
+     * Unprocessable Content
+     */
+    422: ProblemDetails;
+    /**
+     * Internal Server Error
+     */
+    500: ProblemDetails;
 };
 
 export type UpdateCurrentUserError = UpdateCurrentUserErrors[keyof UpdateCurrentUserErrors];
@@ -708,9 +790,17 @@ export type GetUserByIdData = {
 
 export type GetUserByIdErrors = {
     /**
-     * Validation Error
+     * Not Found
      */
-    422: HttpValidationError;
+    404: ProblemDetails;
+    /**
+     * Unprocessable Content
+     */
+    422: ProblemDetails;
+    /**
+     * Internal Server Error
+     */
+    500: ProblemDetails;
 };
 
 export type GetUserByIdError = GetUserByIdErrors[keyof GetUserByIdErrors];
@@ -730,6 +820,19 @@ export type GetCurrentUserLogsData = {
     query?: never;
     url: '/users/me/logs';
 };
+
+export type GetCurrentUserLogsErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ProblemDetails;
+    /**
+     * Internal Server Error
+     */
+    500: ProblemDetails;
+};
+
+export type GetCurrentUserLogsError = GetCurrentUserLogsErrors[keyof GetCurrentUserLogsErrors];
 
 export type GetCurrentUserLogsResponses = {
     /**
@@ -751,9 +854,13 @@ export type LoginData = {
 
 export type LoginErrors = {
     /**
-     * Validation Error
+     * Unauthorized
      */
-    422: HttpValidationError;
+    401: ProblemDetails;
+    /**
+     * Unprocessable Content
+     */
+    422: ProblemDetails;
 };
 
 export type LoginError = LoginErrors[keyof LoginErrors];
@@ -783,9 +890,25 @@ export type SearchShowsData = {
 
 export type SearchShowsErrors = {
     /**
-     * Validation Error
+     * Unprocessable Content
      */
-    422: HttpValidationError;
+    422: ProblemDetails;
+    /**
+     * Internal Server Error
+     */
+    500: ProblemDetails;
+    /**
+     * Bad Gateway
+     */
+    502: ProblemDetails;
+    /**
+     * Service Unavailable
+     */
+    503: ProblemDetails;
+    /**
+     * Gateway Timeout
+     */
+    504: ProblemDetails;
 };
 
 export type SearchShowsError = SearchShowsErrors[keyof SearchShowsErrors];
@@ -815,9 +938,33 @@ export type GetShowData = {
 
 export type GetShowErrors = {
     /**
-     * Validation Error
+     * Unauthorized
      */
-    422: HttpValidationError;
+    401: ProblemDetails;
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+    /**
+     * Unprocessable Content
+     */
+    422: ProblemDetails;
+    /**
+     * Internal Server Error
+     */
+    500: ProblemDetails;
+    /**
+     * Bad Gateway
+     */
+    502: ProblemDetails;
+    /**
+     * Service Unavailable
+     */
+    503: ProblemDetails;
+    /**
+     * Gateway Timeout
+     */
+    504: ProblemDetails;
 };
 
 export type GetShowError = GetShowErrors[keyof GetShowErrors];
@@ -850,9 +997,33 @@ export type GetSeasonData = {
 
 export type GetSeasonErrors = {
     /**
-     * Validation Error
+     * Unauthorized
      */
-    422: HttpValidationError;
+    401: ProblemDetails;
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+    /**
+     * Unprocessable Content
+     */
+    422: ProblemDetails;
+    /**
+     * Internal Server Error
+     */
+    500: ProblemDetails;
+    /**
+     * Bad Gateway
+     */
+    502: ProblemDetails;
+    /**
+     * Service Unavailable
+     */
+    503: ProblemDetails;
+    /**
+     * Gateway Timeout
+     */
+    504: ProblemDetails;
 };
 
 export type GetSeasonError = GetSeasonErrors[keyof GetSeasonErrors];
@@ -882,9 +1053,33 @@ export type GetEpisodeData = {
 
 export type GetEpisodeErrors = {
     /**
-     * Validation Error
+     * Unauthorized
      */
-    422: HttpValidationError;
+    401: ProblemDetails;
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+    /**
+     * Unprocessable Content
+     */
+    422: ProblemDetails;
+    /**
+     * Internal Server Error
+     */
+    500: ProblemDetails;
+    /**
+     * Bad Gateway
+     */
+    502: ProblemDetails;
+    /**
+     * Service Unavailable
+     */
+    503: ProblemDetails;
+    /**
+     * Gateway Timeout
+     */
+    504: ProblemDetails;
 };
 
 export type GetEpisodeError = GetEpisodeErrors[keyof GetEpisodeErrors];
@@ -915,9 +1110,33 @@ export type LogEpisodeData = {
 
 export type LogEpisodeErrors = {
     /**
-     * Validation Error
+     * Unauthorized
      */
-    422: HttpValidationError;
+    401: ProblemDetails;
+    /**
+     * Not Found
+     */
+    404: ProblemDetails;
+    /**
+     * Unprocessable Content
+     */
+    422: ProblemDetails;
+    /**
+     * Internal Server Error
+     */
+    500: ProblemDetails;
+    /**
+     * Bad Gateway
+     */
+    502: ProblemDetails;
+    /**
+     * Service Unavailable
+     */
+    503: ProblemDetails;
+    /**
+     * Gateway Timeout
+     */
+    504: ProblemDetails;
 };
 
 export type LogEpisodeError = LogEpisodeErrors[keyof LogEpisodeErrors];

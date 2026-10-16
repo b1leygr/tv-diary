@@ -4,7 +4,7 @@ import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanst
 
 import { client } from '../client.gen';
 import { createUser, deleteCurrentUser, getCurrentUser, getCurrentUserLogs, getEpisode, getSeason, getShow, getUserById, getUsers, logEpisode, login, type Options, root, searchShows, updateCurrentUser } from '../sdk.gen';
-import type { CreateUserData, CreateUserError, CreateUserResponse, DeleteCurrentUserData, DeleteCurrentUserResponse, GetCurrentUserData, GetCurrentUserLogsData, GetCurrentUserLogsResponse, GetCurrentUserResponse, GetEpisodeData, GetEpisodeError, GetEpisodeResponse, GetSeasonData, GetSeasonError, GetSeasonResponse, GetShowData, GetShowError, GetShowResponse, GetUserByIdData, GetUserByIdError, GetUserByIdResponse, GetUsersData, GetUsersError, GetUsersResponse, LogEpisodeData, LogEpisodeError, LogEpisodeResponse, LoginData, LoginError, LoginResponse, RootData, SearchShowsData, SearchShowsError, SearchShowsResponse, UpdateCurrentUserData, UpdateCurrentUserError, UpdateCurrentUserResponse } from '../types.gen';
+import type { CreateUserData, CreateUserError, CreateUserResponse, DeleteCurrentUserData, DeleteCurrentUserError, DeleteCurrentUserResponse, GetCurrentUserData, GetCurrentUserError, GetCurrentUserLogsData, GetCurrentUserLogsError, GetCurrentUserLogsResponse, GetCurrentUserResponse, GetEpisodeData, GetEpisodeError, GetEpisodeResponse, GetSeasonData, GetSeasonError, GetSeasonResponse, GetShowData, GetShowError, GetShowResponse, GetUserByIdData, GetUserByIdError, GetUserByIdResponse, GetUsersData, GetUsersError, GetUsersResponse, LogEpisodeData, LogEpisodeError, LogEpisodeResponse, LoginData, LoginError, LoginResponse, RootData, SearchShowsData, SearchShowsError, SearchShowsResponse, UpdateCurrentUserData, UpdateCurrentUserError, UpdateCurrentUserResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -77,8 +77,8 @@ export const createUserMutation = (options?: Partial<Options<CreateUserData>>): 
 /**
  * Delete Current User
  */
-export const deleteCurrentUserMutation = (options?: Partial<Options<DeleteCurrentUserData>>): UseMutationOptions<DeleteCurrentUserResponse, DefaultError, Options<DeleteCurrentUserData>> => {
-    const mutationOptions: UseMutationOptions<DeleteCurrentUserResponse, DefaultError, Options<DeleteCurrentUserData>> = {
+export const deleteCurrentUserMutation = (options?: Partial<Options<DeleteCurrentUserData>>): UseMutationOptions<DeleteCurrentUserResponse, DeleteCurrentUserError, Options<DeleteCurrentUserData>> => {
+    const mutationOptions: UseMutationOptions<DeleteCurrentUserResponse, DeleteCurrentUserError, Options<DeleteCurrentUserData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await deleteCurrentUser({
                 ...options,
@@ -96,7 +96,7 @@ export const getCurrentUserQueryKey = (options?: Options<GetCurrentUserData>) =>
 /**
  * Get Current User
  */
-export const getCurrentUserOptions = (options?: Options<GetCurrentUserData>) => queryOptions<GetCurrentUserResponse, DefaultError, GetCurrentUserResponse, ReturnType<typeof getCurrentUserQueryKey>>({
+export const getCurrentUserOptions = (options?: Options<GetCurrentUserData>) => queryOptions<GetCurrentUserResponse, GetCurrentUserError, GetCurrentUserResponse, ReturnType<typeof getCurrentUserQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await getCurrentUser({
             ...options,
@@ -149,7 +149,7 @@ export const getCurrentUserLogsQueryKey = (options?: Options<GetCurrentUserLogsD
 /**
  * Get Current User Logs
  */
-export const getCurrentUserLogsOptions = (options?: Options<GetCurrentUserLogsData>) => queryOptions<GetCurrentUserLogsResponse, DefaultError, GetCurrentUserLogsResponse, ReturnType<typeof getCurrentUserLogsQueryKey>>({
+export const getCurrentUserLogsOptions = (options?: Options<GetCurrentUserLogsData>) => queryOptions<GetCurrentUserLogsResponse, GetCurrentUserLogsError, GetCurrentUserLogsResponse, ReturnType<typeof getCurrentUserLogsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await getCurrentUserLogs({
             ...options,

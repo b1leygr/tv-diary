@@ -1,7 +1,8 @@
+import path from 'node:path';
 import { defineConfig } from '@hey-api/openapi-ts';
-import { loadEnv } from 'vite';
+import dotenv from 'dotenv';
 
-const env = loadEnv('development', process.cwd(), '');
+dotenv.config({ path: path.resolve(import.meta.dirname, '../.env') });
 
 export default defineConfig({
   plugins: [
@@ -10,6 +11,6 @@ export default defineConfig({
     '@hey-api/typescript',
     '@tanstack/react-query',
   ],
-  input: `${env.VITE_API_URL}/openapi.json`,
+  input: `${process.env.VITE_API_URL}/openapi.json`,
   output: 'src/client',
 });

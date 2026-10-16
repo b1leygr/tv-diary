@@ -90,6 +90,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.0.1
         version: 6.1.1(vite@8.3.2(@types/node@22.20.5)(jiti@2.7.0))
+      dotenv:
+        specifier: ^18.0.8
+        version: 18.0.8
       typescript:
         specifier: ^6.0.2
         version: 6.0.3
@@ -1093,6 +1096,11 @@ packages:
   dotenv@17.4.2:
     resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
     engines: {node: '>=12'}
+
+  dotenv@18.0.8:
+    resolution: {integrity: sha512-2KDeoFoK/zRtcnbunCDlLG5VWVMcyqeQc6iK65o231nfNAcuGrKoqUQfJFUtBI+QlShk5HKIHxwebBtUl3rEfA==}
+    engines: {node: '>=12'}
+    hasBin: true
 
   electron-to-chromium@1.5.444:
     resolution: {integrity: sha512-5ss/uJfoDYDHT0lfJzT6FbcskIzROIOPf0BbbFkGcvDzoJU7i//9GDrwwIHQVmIsrAGiF3ihpADBRIsrEFt1rQ==}
@@ -2745,6 +2753,8 @@ snapshots:
   diff@8.0.4: {}
 
   dotenv@17.4.2: {}
+
+  dotenv@18.0.8: {}
 
   electron-to-chromium@1.5.444: {}
 

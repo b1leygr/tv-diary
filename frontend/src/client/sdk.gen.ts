@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { CreateUserData, CreateUserErrors, CreateUserResponses, DeleteCurrentUserData, DeleteCurrentUserResponses, GetCurrentUserData, GetCurrentUserLogsData, GetCurrentUserLogsResponses, GetCurrentUserResponses, GetEpisodeData, GetEpisodeErrors, GetEpisodeResponses, GetSeasonData, GetSeasonErrors, GetSeasonResponses, GetShowData, GetShowErrors, GetShowResponses, GetUserByIdData, GetUserByIdErrors, GetUserByIdResponses, GetUsersData, GetUsersErrors, GetUsersResponses, LogEpisodeData, LogEpisodeErrors, LogEpisodeResponses, LoginData, LoginErrors, LoginResponses, RootData, RootResponses, SearchShowsData, SearchShowsErrors, SearchShowsResponses, UpdateCurrentUserData, UpdateCurrentUserErrors, UpdateCurrentUserResponses } from './types.gen';
+import type { CreateUserData, CreateUserErrors, CreateUserResponses, DeleteCurrentUserData, DeleteCurrentUserErrors, DeleteCurrentUserResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserLogsData, GetCurrentUserLogsErrors, GetCurrentUserLogsResponses, GetCurrentUserResponses, GetEpisodeData, GetEpisodeErrors, GetEpisodeResponses, GetSeasonData, GetSeasonErrors, GetSeasonResponses, GetShowData, GetShowErrors, GetShowResponses, GetUserByIdData, GetUserByIdErrors, GetUserByIdResponses, GetUsersData, GetUsersErrors, GetUsersResponses, LogEpisodeData, LogEpisodeErrors, LogEpisodeResponses, LoginData, LoginErrors, LoginResponses, RootData, RootResponses, SearchShowsData, SearchShowsErrors, SearchShowsResponses, UpdateCurrentUserData, UpdateCurrentUserErrors, UpdateCurrentUserResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -38,7 +38,7 @@ export const createUser = <ThrowOnError extends boolean = false>(options: Option
 /**
  * Delete Current User
  */
-export const deleteCurrentUser = <ThrowOnError extends boolean = false>(options?: Options<DeleteCurrentUserData, ThrowOnError>): RequestResult<DeleteCurrentUserResponses, unknown, ThrowOnError> => (options?.client ?? client).delete<DeleteCurrentUserResponses, unknown, ThrowOnError>({
+export const deleteCurrentUser = <ThrowOnError extends boolean = false>(options?: Options<DeleteCurrentUserData, ThrowOnError>): RequestResult<DeleteCurrentUserResponses, DeleteCurrentUserErrors, ThrowOnError> => (options?.client ?? client).delete<DeleteCurrentUserResponses, DeleteCurrentUserErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/users/me',
     ...options
@@ -47,7 +47,7 @@ export const deleteCurrentUser = <ThrowOnError extends boolean = false>(options?
 /**
  * Get Current User
  */
-export const getCurrentUser = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentUserData, ThrowOnError>): RequestResult<GetCurrentUserResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetCurrentUserResponses, unknown, ThrowOnError>({
+export const getCurrentUser = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentUserData, ThrowOnError>): RequestResult<GetCurrentUserResponses, GetCurrentUserErrors, ThrowOnError> => (options?.client ?? client).get<GetCurrentUserResponses, GetCurrentUserErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/users/me',
     ...options
@@ -74,7 +74,7 @@ export const getUserById = <ThrowOnError extends boolean = false>(options: Optio
 /**
  * Get Current User Logs
  */
-export const getCurrentUserLogs = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentUserLogsData, ThrowOnError>): RequestResult<GetCurrentUserLogsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetCurrentUserLogsResponses, unknown, ThrowOnError>({
+export const getCurrentUserLogs = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentUserLogsData, ThrowOnError>): RequestResult<GetCurrentUserLogsResponses, GetCurrentUserLogsErrors, ThrowOnError> => (options?.client ?? client).get<GetCurrentUserLogsResponses, GetCurrentUserLogsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/users/me/logs',
     ...options
