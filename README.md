@@ -22,9 +22,13 @@ Configure .env using the .env.example template.
     ```
     docker compose up --build
     ```
-3. Start the Vite development server
+2. Start the Vite development server
     ```
     cd frontend
     pnpm dev
     ```
-  Interactive API documentation using [Swagger UI](https://swagger.io/open-source/swagger-ui/) can be accessed at [localhost:8000/docs](http://localhost:8000/docs).
+
+You can also start the application with: ```cd backend && ./run.sh app```
+  
+
+Interactive API documentation using [Swagger UI](https://swagger.io/open-source/swagger-ui/) can be accessed at [localhost:8000/docs](http://localhost:8000/docs).
