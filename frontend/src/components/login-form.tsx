@@ -1,17 +1,10 @@
-import {
-  Anchor,
-  Button,
-  Container,
-  Paper,
-  PasswordInput,
-  Text,
-  TextInput,
-} from '@mantine/core';
+import { Anchor, Text } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { toast } from 'react-hot-toast';
 import { type BodyLogin, login } from '#/client';
+import { UserForm } from './user-form';
 
 export function LoginForm() {
   const form = useForm({
@@ -23,7 +16,11 @@ export function LoginForm() {
 
   const navigate = useNavigate();
 
-  const loginMutation = useMutation({
+  const {
+    mutate: loginMutation,
+    error: loginError,
+    isPending: loginPending,
+  } = useMutation({
     mutationFn: (credentials: BodyLogin) => login({ body: credentials }),
     onSuccess: ({ data }) => {
       localStorage.setItem('token', data?.access_token || '');
@@ -33,48 +30,29 @@ export function LoginForm() {
     },
     onError: (error) => {
       console.error('Login failed:', error);
-      toast.error('Login failed!');
+      toast.error(loginError?.detail || 'Login failed!');
     },
   });
 
   const handleSubmit = (values: typeof form.values) => {
     const { username, password } = values;
-    loginMutation.mutate({ username, password });
+    loginMutation({ username, password });
   };
 
   return (
-    <Container size={420} my={40}>
-      <Paper withBorder shadow="md" p={30} mt={30} radius={'md'}>
-        <form onSubmit={form.onSubmit(handleSubmit)}>
-          <TextInput
-            label="username"
-            placeholder="johndoe"
-            required
-            {...form.getInputProps('username')}
-          />
-          <PasswordInput
-            label="password"
-            placeholder="password"
-            required
-            mt="md"
-            {...form.getInputProps('password')}
-          />
-          <Button
-            type="submit"
-            fullWidth
-            mt="md"
-            loading={loginMutation.isPending}
-          >
-            Login
-          </Button>
-          <Text mt="md" ta="center" size="sm">
-            Don't have an account?{' '}
-            <Anchor component={Link} to="/signup">
-              Sign up
-            </Anchor>
-          </Text>
-        </form>
-      </Paper>
-    </Container>
+    <UserForm
+      form={form}
+      onSubmit={form.onSubmit(handleSubmit)}
+      pending={loginPending}
+      submitLabel="Login"
+      extra={
+        <Text mt="md" ta="center" size="sm">
+          Don't have an account?{' '}
+          <Anchor component={Link} to="/signup">
+            Sign up
+          </Anchor>
+        </Text>
+      }
+    />
   );
 }

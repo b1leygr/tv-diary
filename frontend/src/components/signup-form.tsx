@@ -1,14 +1,10 @@
-import {
-  Button,
-  Container,
-  Paper,
-  PasswordInput,
-  TextInput,
-} from '@mantine/core';
+import { Anchor, Text } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { toast } from 'react-hot-toast';
 import { createUser, type UserCreate } from '#/client';
+import { UserForm } from './user-form';
 
 export function SignupForm() {
   const form = useForm({
@@ -19,7 +15,11 @@ export function SignupForm() {
   });
   const navigate = useNavigate();
 
-  const signUpMutation = useMutation({
+  const {
+    mutate: signUpMutation,
+    error: signUpError,
+    isPending: signUpPending,
+  } = useMutation({
     mutationFn: (user: UserCreate) => createUser({ body: user }),
     onSuccess: () => {
       console.log('User created successfully');
@@ -27,41 +27,42 @@ export function SignupForm() {
     },
     onError: (error) => {
       console.error('User creation failed:', error);
+      if (error?.status === 409 && error?.detail) {
+        toast.error(error.detail);
+      } else {
+        toast.error('Account creation failed.');
+      }
     },
   });
 
   const handleSubmit = (values: typeof form.values) => {
     const { username, password } = values;
-    signUpMutation.mutate({ username, password });
+    signUpMutation({ username, password });
   };
 
+  const usernameErrors = signUpError?.invalid_params?.filter(
+    (param) => param.name === 'username',
+  );
+  const passwordErrors = signUpError?.invalid_params?.filter(
+    (param) => param.name === 'password',
+  );
+
   return (
-    <Container size={420} my={40}>
-      <Paper withBorder shadow="md" p={30} mt={30} radius={'md'}>
-        <form onSubmit={form.onSubmit(handleSubmit)}>
-          <TextInput
-            label="username"
-            placeholder="johndoe"
-            required
-            {...form.getInputProps('username')}
-          />
-          <PasswordInput
-            label="password"
-            placeholder="password"
-            required
-            mt="md"
-            {...form.getInputProps('password')}
-          />
-          <Button
-            type="submit"
-            fullWidth
-            mt="xl"
-            loading={signUpMutation.isPending}
-          >
-            Create Account
-          </Button>
-        </form>
-      </Paper>
-    </Container>
+    <UserForm
+      form={form}
+      onSubmit={form.onSubmit(handleSubmit)}
+      pending={signUpPending}
+      submitLabel="Sign Up"
+      usernameErrors={usernameErrors}
+      passwordErrors={passwordErrors}
+      extra={
+        <Text mt="md" ta="center" size="sm">
+          Already have an account?{' '}
+          <Anchor component={Link} to="/login">
+            Log in
+          </Anchor>
+        </Text>
+      }
+    />
   );
 }
