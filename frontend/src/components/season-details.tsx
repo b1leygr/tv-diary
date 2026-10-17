@@ -1,23 +1,19 @@
-import {
-  Anchor,
-  AspectRatio,
-  Box,
-  Card,
-  Divider,
-  Group,
-  Image,
-  Stack,
-  Text,
-  Title,
-} from '@mantine/core';
+import { Anchor, Card, Group, Stack, Title } from '@mantine/core';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
 import { CalendarDays, Check, Clock3 } from 'lucide-react';
 import { getSeasonOptions } from '#/client/@tanstack/react-query.gen';
+import { Banner } from './banner';
+import { CreativeCard, CreativeScroller } from './creative-card';
+import { MediaCard } from './media-card';
 
 export function SeasonDetails() {
   const { id } = useParams({ from: '/seasons/$id' });
-  const { data } = useSuspenseQuery({
+  const {
+    data: seasonData,
+    isLoading: isSeasonLoading,
+    error: seasonError,
+  } = useSuspenseQuery({
     ...getSeasonOptions({
       path: { season_id: Number(id) },
       query: { view: 'full' },
@@ -30,32 +26,19 @@ export function SeasonDetails() {
     },
   });
 
-  const cards = data.cast.map((item) => (
-    <Card
+  if (isSeasonLoading) return <div>Loading...</div>;
+  if (seasonError) return <div>Error loading season details.</div>;
+
+  const cast = seasonData.cast.map((item) => (
+    <CreativeCard
       key={item.id}
-      shadow="sm"
-      radius="md"
-      withBorder
-      w={160}
-      style={{ flexShrink: 0 }}
-    >
-      <Card.Section>
-        <AspectRatio ratio={2 / 3}>
-          <Image
-            src={`https://image.tmdb.org/t/p/original/${item.profile_path}`}
-          />
-        </AspectRatio>
-      </Card.Section>
-      <Text fw={460} size="lg" mt="md">
-        {item.character}
-      </Text>
-      <Text size="sm" c="dimmed" mt="xs" mb="md">
-        {item.name}
-      </Text>
-    </Card>
+      name={item.name}
+      character={item.character}
+      profilePath={item.profile_path}
+    />
   ));
 
-  const episodes = data.episodes_with_progress.map((item) => (
+  const episodes = seasonData.episodes_with_progress.map((item) => (
     <Card withBorder key={item.id}>
       <Group>
         <Anchor component={Link} to={`/episodes/${item.id}`}>
@@ -71,51 +54,37 @@ export function SeasonDetails() {
   ));
 
   return (
-    <Card withBorder padding={'md'} radius={'md'} w={1200}>
-      <Stack>
-        <Group wrap="nowrap" align="flex-start">
-          <Box pos={'relative'}>
-            <AspectRatio ratio={2 / 3}>
-              <Image
-                src={`https://image.tmdb.org/t/p/original/${data.poster_path}`}
-                maw={300}
-              ></Image>
-            </AspectRatio>
-          </Box>
-          <Stack gap={'s'} mih={450} maw={850}>
-            <Anchor component={Link} to={`/shows/${data.show_id}`} c={'dimmed'}>
-              {data.show_name}
-            </Anchor>
-            <Title order={1} mt={'-sm'}>
-              {data.name}
-            </Title>
-            <Group gap={'xs'} c={'dimmed'}>
-              <CalendarDays className="size-4" />
-              {data?.air_date}
-            </Group>
-            <Divider miw={850} />
-            <Title order={3}>Overview</Title>
-            <Text size="xl">
-              {data.overview ? data.overview : 'No overview available...'}
-            </Text>
-          </Stack>
-        </Group>
-        <Title order={3} p={'md'}>
-          Cast
-        </Title>
-        <Group
-          wrap={'nowrap'}
-          p={'md'}
-          style={{ overflowX: 'auto' }}
-          align="stretch"
-        >
-          {cards}
-        </Group>
-        <Title order={3} p={'md'}>
+    <Stack w={'100%'}>
+      {seasonData.show_backdrop_path && (
+        <Banner backdropPath={seasonData.show_backdrop_path} />
+      )}
+
+      <MediaCard
+        title={seasonData.name}
+        posterPath={seasonData.poster_path}
+        backRefs={[
+          {
+            label: seasonData.show_name,
+            path: `/shows/${seasonData.show_id}`,
+          },
+        ]}
+        descriptors={
+          <>
+            <CalendarDays className="size-4" />
+            {seasonData.air_date}
+          </>
+        }
+        overview={seasonData.overview}
+      />
+
+      <CreativeScroller type="Cast" creatives={cast} />
+
+      <Card padding="md" radius="md" withBorder>
+        <Title order={3} py="md">
           Episodes
         </Title>
         <Stack>{episodes}</Stack>
-      </Stack>
-    </Card>
+      </Card>
+    </Stack>
   );
 }
