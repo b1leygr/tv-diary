@@ -17,7 +17,7 @@ export function SearchBar() {
     },
     validate: {
       query: (value) =>
-        value.trim().length < 2 ? 'Search query too short' : null,
+        value.trim().length < 1 ? 'Enter a search query' : null,
     },
   });
 
