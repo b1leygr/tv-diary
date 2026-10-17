@@ -1,21 +1,91 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 ## Starts the development environment.
 dev() {
-    trap 'docker compose down -v --remove-orphans; echo "Development database stopped."' EXIT
+    cleanup() {
+        echo "Stopping development environment..."
+        docker compose down -v --remove-orphans
+        echo "Development environment stopped."
+        trap - INT TERM
+        exit 0
+    }
+    
+    trap cleanup INT TERM
 
     echo "Starting development database..."
-    echo "Waiting for development database to be ready..."
-    docker compose up -d --wait db
-    echo "Development database is ready."
-    
+    if docker compose up -d --wait db; then
+        echo "Development database is ready."
+    else
+        echo "Failed to start development database."
+        cleanup
+        exit 1
+    fi
+
     echo "Running database migrations..."
-    uv run alembic upgrade head
-    echo "Database migrations completed."
+    if uv run alembic upgrade head; then
+        echo "Database migrations completed."
+    else
+        echo "Failed to run database migrations."
+        cleanup
+        exit 1
+    fi
 
     echo "Starting development server..."
     uv run fastapi dev
+}
+
+## Starts the development environment in a Docker container.
+dev-docker() {
+    cleanup() {
+        echo -e "\nStopping development container..."
+        docker compose down -v --remove-orphans
+        echo "Development container stopped."
+        trap - INT TERM
+        exit 0
+    }
+
+    trap cleanup INT TERM
+
+    echo "Starting development container..."
+    if docker compose up --wait backend; then
+        echo "Development container is ready."
+        echo "You can now access the application at http://localhost:8000"
+        echo "Press Ctrl+C to stop the development container."
+        echo "--------------------------------------------------------------"
+
+        docker compose logs -f backend
+    else
+        echo "Failed to start development containers."
+        cleanup
+        exit 1
+    fi
+}
+
+## Starts the application with backend and frontend components.
+app() {
+    cleanup() {
+        echo -e "\nStopping application..."
+        docker compose down -v --remove-orphans
+        echo "Backend containers stopped."
+        echo "Application stopped."
+        trap - INT TERM
+        exit 0
+    }
+
+    trap cleanup INT TERM
+
+    echo "Starting application..."
+    echo "Starting backend Docker containers..."
+    if docker compose up -d --wait backend; then
+        echo "Backend containers are ready."
+        echo "Starting frontend development server..."
+        (cd ../frontend && pnpm run dev)
+    else
+        echo "Failed to start application."
+        cleanup
+        exit 1
+    fi
 }
 
 ## Runs integration tests against a containerised test database.
@@ -53,7 +123,7 @@ COMMAND="$1"
 shift
 
 case "$COMMAND" in
-    dev|test|help)
+    dev|dev-docker|app|test|help)
         # Execute the function matching the command name
         "$COMMAND" "$@"
         ;;
