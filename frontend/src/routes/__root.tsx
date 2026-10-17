@@ -1,3 +1,4 @@
+import { AppShell, Box, Container, Flex, Title } from '@mantine/core';
 import type { QueryClient } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import {
@@ -18,22 +19,36 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function RootComponent() {
   const location = useLocation();
-  const isSearchHidden = ['/login', '/register'].includes(location.pathname);
+  const isSearchHidden = ['/login', '/signup'].includes(location.pathname);
 
   return (
-    <div className="min-h-screen bg-background font-sans antialiased">
-      <header className="border-b border-border bg-background/50 backdrop-blur">
-        <div className="container mx-auto flex max-w-7xl items-center justify-between p-6">
-          <h1 className="text-2xl font-bold">TV Diary</h1>
-          {!isSearchHidden && <SearchBar />}
-        </div>
-      </header>
-      <div className="h-4" />
-      <main className="container mx-auto max-w-7xl p-6">
-        <Toaster position="top-center" />
+    <AppShell padding="md" header={{ height: { base: 100, sm: 60 } }}>
+      <AppShell.Header>
+        <Container size="xl" h="100%">
+          <Flex
+            h="100%"
+            align="center"
+            justify="space-between"
+            direction={{ base: 'column', sm: 'row' }}
+            py={{ base: 'xs', sm: 0 }}
+            gap={{ base: 'xs', sm: 'md' }}
+          >
+            <Title order={1} size="h3">
+              TV Diary
+            </Title>
+            {!isSearchHidden && (
+              <Box w={{ base: '100%', sm: 'auto' }}>
+                <SearchBar />
+              </Box>
+            )}
+          </Flex>
+        </Container>
+      </AppShell.Header>
+      <AppShell.Main>
         <Outlet />
-      </main>
+      </AppShell.Main>
+      <Toaster position="top-center" />
       <ReactQueryDevtools />
-    </div>
+    </AppShell>
   );
 }
