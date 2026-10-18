@@ -13,8 +13,8 @@ password_hash = PasswordHash.recommended()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/sessions', auto_error=False)
 
 
-def create_access_token(sub: str | Any) -> str:
-    expire = datetime.now(UTC) + timedelta(settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+def create_access_token(sub: int) -> str:
+    expire = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode = {'sub': str(sub), 'exp': expire}
     encoded_jwt = jwt.encode(
         to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
