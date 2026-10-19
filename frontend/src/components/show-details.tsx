@@ -9,14 +9,9 @@ import { MediaCard } from './media-card';
 
 export function ShowDetails() {
   const { id } = useParams({ from: '/shows/$id' });
-  const {
-    data: showData,
-    isLoading: isShowLoading,
-    error: showError,
-  } = useSuspenseQuery(getShowOptions({ path: { show_id: Number(id) } }));
-
-  if (isShowLoading) return <div>Loading...</div>;
-  if (showError) return <div>Error loading show details.</div>;
+  const { data: showData } = useSuspenseQuery(
+    getShowOptions({ path: { show_id: Number(id) } }),
+  );
 
   const creators = showData.creators.map((item) => (
     <CreativeCard

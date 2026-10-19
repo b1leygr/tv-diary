@@ -9,11 +9,7 @@ import { MediaCard } from './media-card';
 
 export function SeasonDetails() {
   const { id } = useParams({ from: '/seasons/$id' });
-  const {
-    data: seasonData,
-    isLoading: isSeasonLoading,
-    error: seasonError,
-  } = useSuspenseQuery({
+  const { data: seasonData } = useSuspenseQuery({
     ...getSeasonOptions({
       path: { season_id: Number(id) },
       query: { view: 'full' },
@@ -25,9 +21,6 @@ export function SeasonDetails() {
       return data;
     },
   });
-
-  if (isSeasonLoading) return <div>Loading...</div>;
-  if (seasonError) return <div>Error loading season details.</div>;
 
   const cast = seasonData.cast.map((item) => (
     <CreativeCard

@@ -18,11 +18,9 @@ export function EpisodeDetails() {
   const { id } = useParams({ from: '/episodes/$id' });
   const { queryClient } = useRouteContext({ from: '/episodes/$id' });
 
-  const {
-    data: episodeData,
-    isLoading: isEpisodeLoading,
-    error: episodeError,
-  } = useSuspenseQuery(getEpisodeOptions({ path: { episode_id: Number(id) } }));
+  const { data: episodeData } = useSuspenseQuery(
+    getEpisodeOptions({ path: { episode_id: Number(id) } }),
+  );
 
   const logMutation = useMutation({
     ...logEpisodeMutation(),
@@ -54,9 +52,6 @@ export function EpisodeDetails() {
   const handleClick = () => {
     logMutation.mutate({ path: { episode_id: Number(id) } });
   };
-
-  if (isEpisodeLoading) return <div>Loading...</div>;
-  if (episodeError) return <div>Error loading episode details.</div>;
 
   const guestStars = episodeData.guest_stars.map((item) => (
     <CreativeCard
