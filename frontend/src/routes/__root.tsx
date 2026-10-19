@@ -1,4 +1,4 @@
-import { AppShell, Box, Container, Flex, Title } from '@mantine/core';
+import { AppShell, Box, Container, Flex, Group, Title } from '@mantine/core';
 import type { QueryClient } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import {
@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-router';
 import { Toaster } from 'react-hot-toast';
 import type { AuthContext } from '#/auth';
+import { Profile } from '#/components/profile';
 import { SearchBar } from '#/components/search-bar';
 
 interface MyRouterContext {
@@ -24,6 +25,7 @@ function RootComponent() {
   const isSearchHidden = ['/login', '/signup', '/server-disruption'].includes(
     location.pathname,
   );
+  const isAuthenticated = Route.useRouteContext().auth.authenticated;
 
   return (
     <AppShell padding="md" header={{ height: { base: 100, sm: 60 } }}>
@@ -40,11 +42,18 @@ function RootComponent() {
             <Title order={1} size="h3">
               TV Diary
             </Title>
-            {!isSearchHidden && (
-              <Box w={{ base: '100%', sm: 'auto' }}>
-                <SearchBar />
-              </Box>
-            )}
+            <Group>
+              {!isSearchHidden && (
+                <Box w={{ base: '100%', sm: 'auto' }}>
+                  <SearchBar />
+                </Box>
+              )}
+              {isAuthenticated && (
+                <Box w={{ base: '100%', sm: 'auto' }}>
+                  <Profile />
+                </Box>
+              )}
+            </Group>
           </Flex>
         </Container>
       </AppShell.Header>
