@@ -1,7 +1,12 @@
 import { Anchor, Text } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useMutation } from '@tanstack/react-query';
-import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
+import {
+  Link,
+  useRouteContext,
+  useRouter,
+  useSearch,
+} from '@tanstack/react-router';
 import { toast } from 'react-hot-toast';
 import { type BodyLogin, login } from '#/client';
 import { UserForm } from './user-form';
@@ -9,6 +14,7 @@ import { UserForm } from './user-form';
 export function LoginForm() {
   const { auth } = useRouteContext({ from: '/login' });
   const router = useRouter();
+  const { redirect } = useSearch({ from: '/login' });
 
   const form = useForm({
     initialValues: {
@@ -24,7 +30,12 @@ export function LoginForm() {
       router.invalidate();
       console.log('Login successful, token stored:', data?.access_token);
       toast.success('Login successful!');
-      router.navigate({ to: '/search', search: { query: '' } });
+      if (redirect) {
+        router.navigate({ to: redirect });
+      } else {
+        router.navigate({ to: '/search', search: { query: '' } });
+        return;
+      }
     },
     onError: (error) => {
       console.error('Login failed:', error);

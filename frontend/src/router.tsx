@@ -55,7 +55,10 @@ client.interceptors.response.use((response) => {
     authService.logout();
     queryClient.clear();
     router.invalidate();
-    router.navigate({ to: '/login' });
+    router.navigate({
+      to: '/login',
+      search: { redirect: location.pathname + location.search },
+    });
   }
   return response;
 });
