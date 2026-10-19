@@ -27,7 +27,7 @@ export function SignupForm() {
     },
     onError: (error) => {
       console.error('User creation failed:', error);
-      if (error?.status === 409 && error?.detail) {
+      if (error.status === 409 && error.detail) {
         toast.error(error.detail);
       } else {
         toast.error('Account creation failed.');

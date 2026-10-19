@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as ServerDisruptionRouteImport } from './routes/server-disruption'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as EpisodesIdRouteImport } from './routes/episodes.$id'
 import { Route as SeasonsIdRouteImport } from './routes/seasons.$id'
@@ -30,6 +31,11 @@ const LoginRoute = LoginRouteImport.update({
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServerDisruptionRoute = ServerDisruptionRouteImport.update({
+  id: '/server-disruption',
+  path: '/server-disruption',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/search': typeof SearchRoute
+  '/server-disruption': typeof ServerDisruptionRoute
   '/signup': typeof SignupRoute
   '/episodes/$id': typeof EpisodesIdRoute
   '/seasons/$id': typeof SeasonsIdRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/search': typeof SearchRoute
+  '/server-disruption': typeof ServerDisruptionRoute
   '/signup': typeof SignupRoute
   '/episodes/$id': typeof EpisodesIdRoute
   '/seasons/$id': typeof SeasonsIdRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/search': typeof SearchRoute
+  '/server-disruption': typeof ServerDisruptionRoute
   '/signup': typeof SignupRoute
   '/episodes/$id': typeof EpisodesIdRoute
   '/seasons/$id': typeof SeasonsIdRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/search'
+    | '/server-disruption'
     | '/signup'
     | '/episodes/$id'
     | '/seasons/$id'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/search'
+    | '/server-disruption'
     | '/signup'
     | '/episodes/$id'
     | '/seasons/$id'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/search'
+    | '/server-disruption'
     | '/signup'
     | '/episodes/$id'
     | '/seasons/$id'
@@ -115,6 +127,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
   SearchRoute: typeof SearchRoute
+  ServerDisruptionRoute: typeof ServerDisruptionRoute
   SignupRoute: typeof SignupRoute
   EpisodesIdRoute: typeof EpisodesIdRoute
   SeasonsIdRoute: typeof SeasonsIdRoute
@@ -142,6 +155,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/server-disruption': {
+      id: '/server-disruption'
+      path: '/server-disruption'
+      fullPath: '/server-disruption'
+      preLoaderRoute: typeof ServerDisruptionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -179,6 +199,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   SearchRoute: SearchRoute,
+  ServerDisruptionRoute: ServerDisruptionRoute,
   SignupRoute: SignupRoute,
   EpisodesIdRoute: EpisodesIdRoute,
   SeasonsIdRoute: SeasonsIdRoute,

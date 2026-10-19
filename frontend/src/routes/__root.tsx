@@ -7,10 +7,12 @@ import {
   useLocation,
 } from '@tanstack/react-router';
 import { Toaster } from 'react-hot-toast';
+import type { AuthContext } from '#/auth';
 import { SearchBar } from '#/components/search-bar';
 
 interface MyRouterContext {
   queryClient: QueryClient;
+  auth: AuthContext;
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
@@ -19,7 +21,9 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function RootComponent() {
   const location = useLocation();
-  const isSearchHidden = ['/login', '/signup'].includes(location.pathname);
+  const isSearchHidden = ['/login', '/signup', '/server-disruption'].includes(
+    location.pathname,
+  );
 
   return (
     <AppShell padding="md" header={{ height: { base: 100, sm: 60 } }}>

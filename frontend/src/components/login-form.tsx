@@ -1,12 +1,15 @@
 import { Anchor, Text } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useMutation } from '@tanstack/react-query';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
 import { toast } from 'react-hot-toast';
 import { type BodyLogin, login } from '#/client';
 import { UserForm } from './user-form';
 
 export function LoginForm() {
+  const { auth } = useRouteContext({ from: '/login' });
+  const router = useRouter();
+
   const form = useForm({
     initialValues: {
       username: '',
@@ -14,23 +17,18 @@ export function LoginForm() {
     },
   });
 
-  const navigate = useNavigate();
-
-  const {
-    mutate: loginMutation,
-    error: loginError,
-    isPending: loginPending,
-  } = useMutation({
+  const { mutate: loginMutation, isPending: loginPending } = useMutation({
     mutationFn: (credentials: BodyLogin) => login({ body: credentials }),
     onSuccess: ({ data }) => {
-      localStorage.setItem('token', data?.access_token || '');
+      auth.login(data?.access_token || '');
+      router.invalidate();
       console.log('Login successful, token stored:', data?.access_token);
       toast.success('Login successful!');
-      navigate({ to: '/search', search: { query: '' } });
+      router.navigate({ to: '/search', search: { query: '' } });
     },
     onError: (error) => {
       console.error('Login failed:', error);
-      toast.error(loginError?.detail || 'Login failed!');
+      toast.error(error.detail || 'Login failed!');
     },
   });
 
