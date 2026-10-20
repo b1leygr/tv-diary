@@ -834,37 +834,6 @@ export type GetUserByIdResponses = {
 
 export type GetUserByIdResponse = GetUserByIdResponses[keyof GetUserByIdResponses];
 
-export type GetCurrentUserLogsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/users/me/logs';
-};
-
-export type GetCurrentUserLogsErrors = {
-    /**
-     * Unauthorized
-     */
-    401: ProblemDetails;
-    /**
-     * Internal Server Error
-     */
-    500: ProblemDetails;
-};
-
-export type GetCurrentUserLogsError = GetCurrentUserLogsErrors[keyof GetCurrentUserLogsErrors];
-
-export type GetCurrentUserLogsResponses = {
-    /**
-     * Response Get Current User Logs
-     *
-     * Successful Response
-     */
-    200: Array<UserLogSummary>;
-};
-
-export type GetCurrentUserLogsResponse = GetCurrentUserLogsResponses[keyof GetCurrentUserLogsResponses];
-
 export type LoginData = {
     body: BodyLogin;
     path?: never;
@@ -1169,6 +1138,49 @@ export type LogEpisodeResponses = {
 };
 
 export type LogEpisodeResponse = LogEpisodeResponses[keyof LogEpisodeResponses];
+
+export type GetCurrentUserLogsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/me/logs';
+};
+
+export type GetCurrentUserLogsErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ProblemDetails;
+    /**
+     * Internal Server Error
+     */
+    500: ProblemDetails;
+    /**
+     * Bad Gateway
+     */
+    502: ProblemDetails;
+    /**
+     * Service Unavailable
+     */
+    503: ProblemDetails;
+    /**
+     * Gateway Timeout
+     */
+    504: ProblemDetails;
+};
+
+export type GetCurrentUserLogsError = GetCurrentUserLogsErrors[keyof GetCurrentUserLogsErrors];
+
+export type GetCurrentUserLogsResponses = {
+    /**
+     * Response Get Current User Logs
+     *
+     * Successful Response
+     */
+    200: Array<UserLogSummary>;
+};
+
+export type GetCurrentUserLogsResponse = GetCurrentUserLogsResponses[keyof GetCurrentUserLogsResponses];
 
 export type RootData = {
     body?: never;

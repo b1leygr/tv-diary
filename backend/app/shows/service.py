@@ -279,6 +279,26 @@ async def log_episode(
     return episode_log
 
 
+async def get_current_user_log(db: AsyncSession, user: User):
+    stmt = (
+        select(
+            EpisodeLog.logged_at.label('logged_at'),
+            Episode.name.label('episode_name'),
+            Season.name.label('season_name'),
+            Show.name.label('show_name'),
+        )
+        .join(Episode, EpisodeLog.episode_id == Episode.id)
+        .join(Season, Season.id == Episode.season_id)
+        .join(Show, Show.id == Season.show_id)
+        .where(EpisodeLog.user_id == user.id)
+        .order_by(EpisodeLog.logged_at.desc())
+        .limit(10)
+    )
+    results = (await db.execute(stmt)).all()
+
+    return results
+
+
 async def parse_progress(result, type: Literal['seasons', 'episodes']):
     if type == 'episodes':
         episodes = []

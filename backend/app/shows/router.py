@@ -13,6 +13,7 @@ from app.shows.schemas import (
     ShowResponse,
     ShowSearchRequest,
     ShowSearchResult,
+    UserLogSummary,
 )
 
 router = APIRouter(
@@ -90,3 +91,12 @@ async def log_episode(
     logged_at: Annotated[datetime | None, Body()] = None,
 ):
     return await show_service.log_episode(db, user, episode_id, logged_at)
+
+
+@router.get(
+    '/me/logs',
+    response_model=list[UserLogSummary],
+    responses={status.HTTP_401_UNAUTHORIZED: {}},
+)
+async def get_current_user_logs(current_user: CurrentUser, db: DbSession):
+    return await show_service.get_current_user_log(db, current_user)

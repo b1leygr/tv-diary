@@ -144,24 +144,6 @@ export const getUserByIdOptions = (options: Options<GetUserByIdData>) => queryOp
     queryKey: getUserByIdQueryKey(options)
 });
 
-export const getCurrentUserLogsQueryKey = (options?: Options<GetCurrentUserLogsData>) => createQueryKey('getCurrentUserLogs', options);
-
-/**
- * Get Current User Logs
- */
-export const getCurrentUserLogsOptions = (options?: Options<GetCurrentUserLogsData>) => queryOptions<GetCurrentUserLogsResponse, GetCurrentUserLogsError, GetCurrentUserLogsResponse, ReturnType<typeof getCurrentUserLogsQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getCurrentUserLogs({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getCurrentUserLogsQueryKey(options)
-});
-
 /**
  * Login
  */
@@ -267,6 +249,24 @@ export const logEpisodeMutation = (options?: Partial<Options<LogEpisodeData>>): 
     };
     return mutationOptions;
 };
+
+export const getCurrentUserLogsQueryKey = (options?: Options<GetCurrentUserLogsData>) => createQueryKey('getCurrentUserLogs', options);
+
+/**
+ * Get Current User Logs
+ */
+export const getCurrentUserLogsOptions = (options?: Options<GetCurrentUserLogsData>) => queryOptions<GetCurrentUserLogsResponse, GetCurrentUserLogsError, GetCurrentUserLogsResponse, ReturnType<typeof getCurrentUserLogsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getCurrentUserLogs({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getCurrentUserLogsQueryKey(options)
+});
 
 export const rootQueryKey = (options?: Options<RootData>) => createQueryKey('root', options);
 

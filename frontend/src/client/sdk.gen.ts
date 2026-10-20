@@ -72,15 +72,6 @@ export const updateCurrentUser = <ThrowOnError extends boolean = false>(options:
 export const getUserById = <ThrowOnError extends boolean = false>(options: Options<GetUserByIdData, ThrowOnError>): RequestResult<GetUserByIdResponses, GetUserByIdErrors, ThrowOnError> => (options.client ?? client).get<GetUserByIdResponses, GetUserByIdErrors, ThrowOnError>({ url: '/users/{user_id}', ...options });
 
 /**
- * Get Current User Logs
- */
-export const getCurrentUserLogs = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentUserLogsData, ThrowOnError>): RequestResult<GetCurrentUserLogsResponses, GetCurrentUserLogsErrors, ThrowOnError> => (options?.client ?? client).get<GetCurrentUserLogsResponses, GetCurrentUserLogsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/users/me/logs',
-    ...options
-});
-
-/**
  * Login
  */
 export const login = <ThrowOnError extends boolean = false>(options: Options<LoginData, ThrowOnError>): RequestResult<LoginResponses, LoginErrors, ThrowOnError> => (options.client ?? client).post<LoginResponses, LoginErrors, ThrowOnError>({
@@ -136,6 +127,15 @@ export const logEpisode = <ThrowOnError extends boolean = false>(options: Option
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+/**
+ * Get Current User Logs
+ */
+export const getCurrentUserLogs = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentUserLogsData, ThrowOnError>): RequestResult<GetCurrentUserLogsResponses, GetCurrentUserLogsErrors, ThrowOnError> => (options?.client ?? client).get<GetCurrentUserLogsResponses, GetCurrentUserLogsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/me/logs',
+    ...options
 });
 
 /**
