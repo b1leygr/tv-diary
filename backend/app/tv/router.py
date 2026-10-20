@@ -4,8 +4,8 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Body, Query, status
 
 from app.core.dependencies import CurrentUser, DbSession, TmdbClient
-from app.shows import service as show_service
-from app.shows.schemas import (
+from app.tv import service as show_service
+from app.tv.schemas import (
     EpisodeLogResponse,
     EpisodeResponse,
     EpisodeSummary,
@@ -17,7 +17,7 @@ from app.shows.schemas import (
 )
 
 router = APIRouter(
-    tags=['shows'],
+    tags=['tv'],
     responses={
         status.HTTP_500_INTERNAL_SERVER_ERROR: {},
         status.HTTP_502_BAD_GATEWAY: {},

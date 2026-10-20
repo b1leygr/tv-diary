@@ -9,13 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute, selectinload
 
 from app.core.dependencies import TmdbClient
-from app.shows.exceptions import (
+from app.tv.exceptions import (
     EpisodeNotFound,
     SeasonNotFound,
     ShowNotFound,
     TmdbClientError,
 )
-from app.shows.models import (
+from app.tv.models import (
     Actor,
     Creator,
     CreatorCredit,
@@ -25,7 +25,7 @@ from app.shows.models import (
     Season,
     Show,
 )
-from app.shows.schemas import (
+from app.tv.schemas import (
     SeasonCreate,
     ShowCreate,
     ShowSearchRequest,
