@@ -12,6 +12,10 @@ export function Profile() {
     router.navigate({ to: '/login' });
   };
 
+  const handleActivity = () => {
+    router.navigate({ to: '/activity' });
+  };
+
   return (
     <Menu shadow="md" width={200} position="bottom-end">
       <Menu.Target>
@@ -26,6 +30,9 @@ export function Profile() {
         </UnstyledButton>
       </Menu.Target>
       <Menu.Dropdown>
+        <Menu.Item component="button" onClick={handleActivity}>
+          Activity
+        </Menu.Item>
         <Menu.Item component="button" onClick={handleLogout}>
           Log Out
         </Menu.Item>

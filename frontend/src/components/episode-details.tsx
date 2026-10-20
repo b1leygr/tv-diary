@@ -4,6 +4,7 @@ import { useParams, useRouteContext } from '@tanstack/react-router';
 import { CalendarDays, Clock3 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
+  getActivityQueryKey,
   getEpisodeOptions,
   getEpisodeQueryKey,
   getSeasonQueryKey,
@@ -41,6 +42,9 @@ export function EpisodeDetails() {
         queryKey: getShowQueryKey({
           path: { show_id: Number(episodeData.show_id) },
         }),
+      });
+      queryClient.invalidateQueries({
+        queryKey: getActivityQueryKey(),
       });
       console.log(`${log_data.episode_name} logged at ${log_data.logged_at}`);
     },
