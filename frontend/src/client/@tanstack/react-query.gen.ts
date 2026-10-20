@@ -3,8 +3,8 @@
 import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { createUser, deleteCurrentUser, getCurrentUser, getCurrentUserLogs, getEpisode, getSeason, getShow, getUserById, getUsers, logEpisode, login, type Options, root, searchShows, updateCurrentUser } from '../sdk.gen';
-import type { CreateUserData, CreateUserError, CreateUserResponse, DeleteCurrentUserData, DeleteCurrentUserError, DeleteCurrentUserResponse, GetCurrentUserData, GetCurrentUserError, GetCurrentUserLogsData, GetCurrentUserLogsError, GetCurrentUserLogsResponse, GetCurrentUserResponse, GetEpisodeData, GetEpisodeError, GetEpisodeResponse, GetSeasonData, GetSeasonError, GetSeasonResponse, GetShowData, GetShowError, GetShowResponse, GetUserByIdData, GetUserByIdError, GetUserByIdResponse, GetUsersData, GetUsersError, GetUsersResponse, LogEpisodeData, LogEpisodeError, LogEpisodeResponse, LoginData, LoginError, LoginResponse, RootData, SearchShowsData, SearchShowsError, SearchShowsResponse, UpdateCurrentUserData, UpdateCurrentUserError, UpdateCurrentUserResponse } from '../types.gen';
+import { createUser, deleteCurrentUser, getActivity, getCurrentUser, getEpisode, getSeason, getShow, getUserById, getUsers, logActivity, login, type Options, root, searchShows, updateCurrentUser } from '../sdk.gen';
+import type { CreateUserData, CreateUserError, CreateUserResponse, DeleteCurrentUserData, DeleteCurrentUserError, DeleteCurrentUserResponse, GetActivityData, GetActivityError, GetActivityResponse, GetCurrentUserData, GetCurrentUserError, GetCurrentUserResponse, GetEpisodeData, GetEpisodeError, GetEpisodeResponse, GetSeasonData, GetSeasonError, GetSeasonResponse, GetShowData, GetShowError, GetShowResponse, GetUserByIdData, GetUserByIdError, GetUserByIdResponse, GetUsersData, GetUsersError, GetUsersResponse, LogActivityData, LogActivityError, LogActivityResponse, LoginData, LoginError, LoginResponse, RootData, SearchShowsData, SearchShowsError, SearchShowsResponse, UpdateCurrentUserData, UpdateCurrentUserError, UpdateCurrentUserResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -233,13 +233,31 @@ export const getEpisodeOptions = (options: Options<GetEpisodeData>) => queryOpti
     queryKey: getEpisodeQueryKey(options)
 });
 
+export const getActivityQueryKey = (options?: Options<GetActivityData>) => createQueryKey('getActivity', options);
+
 /**
- * Log Episode
+ * Get Activity
  */
-export const logEpisodeMutation = (options?: Partial<Options<LogEpisodeData>>): UseMutationOptions<LogEpisodeResponse, LogEpisodeError, Options<LogEpisodeData>> => {
-    const mutationOptions: UseMutationOptions<LogEpisodeResponse, LogEpisodeError, Options<LogEpisodeData>> = {
+export const getActivityOptions = (options?: Options<GetActivityData>) => queryOptions<GetActivityResponse, GetActivityError, GetActivityResponse, ReturnType<typeof getActivityQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getActivity({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getActivityQueryKey(options)
+});
+
+/**
+ * Log Activity
+ */
+export const logActivityMutation = (options?: Partial<Options<LogActivityData>>): UseMutationOptions<LogActivityResponse, LogActivityError, Options<LogActivityData>> => {
+    const mutationOptions: UseMutationOptions<LogActivityResponse, LogActivityError, Options<LogActivityData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await logEpisode({
+            const { data } = await logActivity({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -249,24 +267,6 @@ export const logEpisodeMutation = (options?: Partial<Options<LogEpisodeData>>): 
     };
     return mutationOptions;
 };
-
-export const getCurrentUserLogsQueryKey = (options?: Options<GetCurrentUserLogsData>) => createQueryKey('getCurrentUserLogs', options);
-
-/**
- * Get Current User Logs
- */
-export const getCurrentUserLogsOptions = (options?: Options<GetCurrentUserLogsData>) => queryOptions<GetCurrentUserLogsResponse, GetCurrentUserLogsError, GetCurrentUserLogsResponse, ReturnType<typeof getCurrentUserLogsQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getCurrentUserLogs({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getCurrentUserLogsQueryKey(options)
-});
 
 export const rootQueryKey = (options?: Options<RootData>) => createQueryKey('root', options);
 

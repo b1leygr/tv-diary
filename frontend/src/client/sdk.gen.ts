@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { CreateUserData, CreateUserErrors, CreateUserResponses, DeleteCurrentUserData, DeleteCurrentUserErrors, DeleteCurrentUserResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserLogsData, GetCurrentUserLogsErrors, GetCurrentUserLogsResponses, GetCurrentUserResponses, GetEpisodeData, GetEpisodeErrors, GetEpisodeResponses, GetSeasonData, GetSeasonErrors, GetSeasonResponses, GetShowData, GetShowErrors, GetShowResponses, GetUserByIdData, GetUserByIdErrors, GetUserByIdResponses, GetUsersData, GetUsersErrors, GetUsersResponses, LogEpisodeData, LogEpisodeErrors, LogEpisodeResponses, LoginData, LoginErrors, LoginResponses, RootData, RootResponses, SearchShowsData, SearchShowsErrors, SearchShowsResponses, UpdateCurrentUserData, UpdateCurrentUserErrors, UpdateCurrentUserResponses } from './types.gen';
+import type { CreateUserData, CreateUserErrors, CreateUserResponses, DeleteCurrentUserData, DeleteCurrentUserErrors, DeleteCurrentUserResponses, GetActivityData, GetActivityErrors, GetActivityResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetEpisodeData, GetEpisodeErrors, GetEpisodeResponses, GetSeasonData, GetSeasonErrors, GetSeasonResponses, GetShowData, GetShowErrors, GetShowResponses, GetUserByIdData, GetUserByIdErrors, GetUserByIdResponses, GetUsersData, GetUsersErrors, GetUsersResponses, LogActivityData, LogActivityErrors, LogActivityResponses, LoginData, LoginErrors, LoginResponses, RootData, RootResponses, SearchShowsData, SearchShowsErrors, SearchShowsResponses, UpdateCurrentUserData, UpdateCurrentUserErrors, UpdateCurrentUserResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -117,25 +117,25 @@ export const getEpisode = <ThrowOnError extends boolean = false>(options: Option
 });
 
 /**
- * Log Episode
+ * Get Activity
  */
-export const logEpisode = <ThrowOnError extends boolean = false>(options: Options<LogEpisodeData, ThrowOnError>): RequestResult<LogEpisodeResponses, LogEpisodeErrors, ThrowOnError> => (options.client ?? client).post<LogEpisodeResponses, LogEpisodeErrors, ThrowOnError>({
+export const getActivity = <ThrowOnError extends boolean = false>(options?: Options<GetActivityData, ThrowOnError>): RequestResult<GetActivityResponses, GetActivityErrors, ThrowOnError> => (options?.client ?? client).get<GetActivityResponses, GetActivityErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/episodes/{episode_id}/logs',
+    url: '/me/activity',
+    ...options
+});
+
+/**
+ * Log Activity
+ */
+export const logActivity = <ThrowOnError extends boolean = false>(options: Options<LogActivityData, ThrowOnError>): RequestResult<LogActivityResponses, LogActivityErrors, ThrowOnError> => (options.client ?? client).post<LogActivityResponses, LogActivityErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/me/activity',
     ...options,
     headers: {
         'Content-Type': 'application/json',
         ...options.headers
     }
-});
-
-/**
- * Get Current User Logs
- */
-export const getCurrentUserLogs = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentUserLogsData, ThrowOnError>): RequestResult<GetCurrentUserLogsResponses, GetCurrentUserLogsErrors, ThrowOnError> => (options?.client ?? client).get<GetCurrentUserLogsResponses, GetCurrentUserLogsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/me/logs',
-    ...options
 });
 
 /**

@@ -194,15 +194,43 @@ class ShowSearchResult(BaseModel):
         return data
 
 
-class EpisodeLogResponse(BaseModel):
-    episode_id: int
-    logged_at: datetime | None
-    episode_name: str
+class ActivityLogRequest(BaseModel):
+    episode_id: int | None = None
+    season_id: int | None = None
+    show_id: int | None = None
+    logged_at: datetime | None = None
+
+    @model_validator(mode='before')
+    @classmethod
+    def validate_request(self, data: dict) -> dict:
+        if not any(
+            [data.get('episode_id'), data.get('season_id'), data.get('show_id')]
+        ):
+            raise ValueError(
+                'At least one of episode_id, season_id, or show_id must be provided.'
+            )
+        return data
+
+
+class ActivityLogResponse(BaseModel):
+    episode_id: int | None = None
+    episode_name: str | None = None
+    season_id: int | None = None
+    season_name: str | None = None
+    show_id: int | None = None
+    show_name: str | None = None
+    logged_at: datetime | None = None
+    mutated_episodes: list[int] | None = None
+    mutated_seasons: list[int] | None = None
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserLogSummary(BaseModel):
+class ActivityLogSummary(BaseModel):
     logged_at: datetime
-    episode_name: str
-    season_name: str
+    episode_id: int | None = None
+    episode_name: str | None = None
+    season_id: int | None = None
+    season_name: str | None = None
+    show_id: int
     show_name: str
+    show_poster_path: str | None = None

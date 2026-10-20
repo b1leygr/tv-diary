@@ -1,33 +1,38 @@
-from datetime import datetime
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Body, Query, status
+from fastapi import APIRouter, Query, status
 
 from app.core.dependencies import CurrentUser, DbSession, TmdbClient
 from app.tv import service as show_service
 from app.tv.schemas import (
-    EpisodeLogResponse,
+    ActivityLogRequest,
+    ActivityLogResponse,
+    ActivityLogSummary,
     EpisodeResponse,
     EpisodeSummary,
     SeasonResponse,
     ShowResponse,
     ShowSearchRequest,
     ShowSearchResult,
-    UserLogSummary,
 )
 
 router = APIRouter(
     tags=['tv'],
     responses={
         status.HTTP_500_INTERNAL_SERVER_ERROR: {},
+    },
+)
+
+
+@router.get(
+    '/shows',
+    response_model=list[ShowSearchResult],
+    responses={
         status.HTTP_502_BAD_GATEWAY: {},
         status.HTTP_503_SERVICE_UNAVAILABLE: {},
         status.HTTP_504_GATEWAY_TIMEOUT: {},
     },
 )
-
-
-@router.get('/shows', response_model=list[ShowSearchResult])
 async def search_shows(
     query: Annotated[
         ShowSearchRequest,
@@ -41,7 +46,13 @@ async def search_shows(
 @router.get(
     '/shows/{show_id}',
     response_model=ShowResponse,
-    responses={status.HTTP_401_UNAUTHORIZED: {}, status.HTTP_404_NOT_FOUND: {}},
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {},
+        status.HTTP_404_NOT_FOUND: {},
+        status.HTTP_502_BAD_GATEWAY: {},
+        status.HTTP_503_SERVICE_UNAVAILABLE: {},
+        status.HTTP_504_GATEWAY_TIMEOUT: {},
+    },
 )
 async def get_show(
     show_id: int,
@@ -80,23 +91,30 @@ async def get_episode(
 
 
 @router.post(
-    '/episodes/{episode_id}/logs',
-    response_model=EpisodeLogResponse,
+    '/me/activity',
+    response_model=ActivityLogResponse,
+    response_model_exclude_none=True,
     responses={status.HTTP_401_UNAUTHORIZED: {}, status.HTTP_404_NOT_FOUND: {}},
 )
-async def log_episode(
-    episode_id: int,
+async def log_activity(
+    log_request: ActivityLogRequest,
     user: CurrentUser,
     db: DbSession,
-    logged_at: Annotated[datetime | None, Body()] = None,
 ):
-    return await show_service.log_episode(db, user, episode_id, logged_at)
+    return await show_service.log_activity(db, user, log_request)
 
 
 @router.get(
-    '/me/logs',
-    response_model=list[UserLogSummary],
+    '/me/activity',
+    response_model=list[ActivityLogSummary],
+    response_model_exclude_none=True,
     responses={status.HTTP_401_UNAUTHORIZED: {}},
 )
-async def get_current_user_logs(current_user: CurrentUser, db: DbSession):
-    return await show_service.get_current_user_log(db, current_user)
+async def get_activity(
+    current_user: CurrentUser,
+    db: DbSession,
+    view: Annotated[
+        Literal['episodes', 'seasons', 'shows'] | None, Query()
+    ] = 'episodes',
+):
+    return await show_service.get_activity(db, current_user, view)

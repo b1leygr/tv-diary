@@ -5,6 +5,108 @@ export type ClientOptions = {
 };
 
 /**
+ * ActivityLogRequest
+ */
+export type ActivityLogRequest = {
+    /**
+     * Episode Id
+     */
+    episode_id?: number | null;
+    /**
+     * Season Id
+     */
+    season_id?: number | null;
+    /**
+     * Show Id
+     */
+    show_id?: number | null;
+    /**
+     * Logged At
+     */
+    logged_at?: string | null;
+};
+
+/**
+ * ActivityLogResponse
+ */
+export type ActivityLogResponse = {
+    /**
+     * Episode Id
+     */
+    episode_id?: number | null;
+    /**
+     * Episode Name
+     */
+    episode_name?: string | null;
+    /**
+     * Season Id
+     */
+    season_id?: number | null;
+    /**
+     * Season Name
+     */
+    season_name?: string | null;
+    /**
+     * Show Id
+     */
+    show_id?: number | null;
+    /**
+     * Show Name
+     */
+    show_name?: string | null;
+    /**
+     * Logged At
+     */
+    logged_at?: string | null;
+    /**
+     * Mutated Episodes
+     */
+    mutated_episodes?: Array<number> | null;
+    /**
+     * Mutated Seasons
+     */
+    mutated_seasons?: Array<number> | null;
+};
+
+/**
+ * ActivityLogSummary
+ */
+export type ActivityLogSummary = {
+    /**
+     * Logged At
+     */
+    logged_at: string;
+    /**
+     * Episode Id
+     */
+    episode_id?: number | null;
+    /**
+     * Episode Name
+     */
+    episode_name?: string | null;
+    /**
+     * Season Id
+     */
+    season_id?: number | null;
+    /**
+     * Season Name
+     */
+    season_name?: string | null;
+    /**
+     * Show Id
+     */
+    show_id: number;
+    /**
+     * Show Name
+     */
+    show_name: string;
+    /**
+     * Show Poster Path
+     */
+    show_poster_path?: string | null;
+};
+
+/**
  * Actor
  */
 export type Actor = {
@@ -90,24 +192,6 @@ export type Creator = {
      * Profile Path
      */
     profile_path: string | null;
-};
-
-/**
- * EpisodeLogResponse
- */
-export type EpisodeLogResponse = {
-    /**
-     * Episode Id
-     */
-    episode_id: number;
-    /**
-     * Logged At
-     */
-    logged_at: string | null;
-    /**
-     * Episode Name
-     */
-    episode_name: string;
 };
 
 /**
@@ -386,28 +470,6 @@ export type UserCreate = {
      * Password
      */
     password: string;
-};
-
-/**
- * UserLogSummary
- */
-export type UserLogSummary = {
-    /**
-     * Logged At
-     */
-    logged_at: string;
-    /**
-     * Episode Name
-     */
-    episode_name: string;
-    /**
-     * Season Name
-     */
-    season_name: string;
-    /**
-     * Show Name
-     */
-    show_name: string;
 };
 
 /**
@@ -1001,18 +1063,6 @@ export type GetSeasonErrors = {
      * Internal Server Error
      */
     500: ProblemDetails;
-    /**
-     * Bad Gateway
-     */
-    502: ProblemDetails;
-    /**
-     * Service Unavailable
-     */
-    503: ProblemDetails;
-    /**
-     * Gateway Timeout
-     */
-    504: ProblemDetails;
 };
 
 export type GetSeasonError = GetSeasonErrors[keyof GetSeasonErrors];
@@ -1057,18 +1107,6 @@ export type GetEpisodeErrors = {
      * Internal Server Error
      */
     500: ProblemDetails;
-    /**
-     * Bad Gateway
-     */
-    502: ProblemDetails;
-    /**
-     * Service Unavailable
-     */
-    503: ProblemDetails;
-    /**
-     * Gateway Timeout
-     */
-    504: ProblemDetails;
 };
 
 export type GetEpisodeError = GetEpisodeErrors[keyof GetEpisodeErrors];
@@ -1082,22 +1120,54 @@ export type GetEpisodeResponses = {
 
 export type GetEpisodeResponse = GetEpisodeResponses[keyof GetEpisodeResponses];
 
-export type LogEpisodeData = {
-    /**
-     * Logged At
-     */
-    body?: string | null;
-    path: {
+export type GetActivityData = {
+    body?: never;
+    path?: never;
+    query?: {
         /**
-         * Episode Id
+         * View
          */
-        episode_id: number;
+        view?: 'episodes' | 'seasons' | 'shows' | null;
     };
-    query?: never;
-    url: '/episodes/{episode_id}/logs';
+    url: '/me/activity';
 };
 
-export type LogEpisodeErrors = {
+export type GetActivityErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ProblemDetails;
+    /**
+     * Unprocessable Content
+     */
+    422: ProblemDetails;
+    /**
+     * Internal Server Error
+     */
+    500: ProblemDetails;
+};
+
+export type GetActivityError = GetActivityErrors[keyof GetActivityErrors];
+
+export type GetActivityResponses = {
+    /**
+     * Response Get Activity
+     *
+     * Successful Response
+     */
+    200: Array<ActivityLogSummary>;
+};
+
+export type GetActivityResponse = GetActivityResponses[keyof GetActivityResponses];
+
+export type LogActivityData = {
+    body: ActivityLogRequest;
+    path?: never;
+    query?: never;
+    url: '/me/activity';
+};
+
+export type LogActivityErrors = {
     /**
      * Unauthorized
      */
@@ -1114,73 +1184,18 @@ export type LogEpisodeErrors = {
      * Internal Server Error
      */
     500: ProblemDetails;
-    /**
-     * Bad Gateway
-     */
-    502: ProblemDetails;
-    /**
-     * Service Unavailable
-     */
-    503: ProblemDetails;
-    /**
-     * Gateway Timeout
-     */
-    504: ProblemDetails;
 };
 
-export type LogEpisodeError = LogEpisodeErrors[keyof LogEpisodeErrors];
+export type LogActivityError = LogActivityErrors[keyof LogActivityErrors];
 
-export type LogEpisodeResponses = {
+export type LogActivityResponses = {
     /**
      * Successful Response
      */
-    200: EpisodeLogResponse;
+    200: ActivityLogResponse;
 };
 
-export type LogEpisodeResponse = LogEpisodeResponses[keyof LogEpisodeResponses];
-
-export type GetCurrentUserLogsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/me/logs';
-};
-
-export type GetCurrentUserLogsErrors = {
-    /**
-     * Unauthorized
-     */
-    401: ProblemDetails;
-    /**
-     * Internal Server Error
-     */
-    500: ProblemDetails;
-    /**
-     * Bad Gateway
-     */
-    502: ProblemDetails;
-    /**
-     * Service Unavailable
-     */
-    503: ProblemDetails;
-    /**
-     * Gateway Timeout
-     */
-    504: ProblemDetails;
-};
-
-export type GetCurrentUserLogsError = GetCurrentUserLogsErrors[keyof GetCurrentUserLogsErrors];
-
-export type GetCurrentUserLogsResponses = {
-    /**
-     * Response Get Current User Logs
-     *
-     * Successful Response
-     */
-    200: Array<UserLogSummary>;
-};
-
-export type GetCurrentUserLogsResponse = GetCurrentUserLogsResponses[keyof GetCurrentUserLogsResponses];
+export type LogActivityResponse = LogActivityResponses[keyof LogActivityResponses];
 
 export type RootData = {
     body?: never;

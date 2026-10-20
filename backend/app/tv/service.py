@@ -2,11 +2,11 @@ from asyncio import gather
 from datetime import datetime, timedelta
 from typing import Literal
 
-from sqlalchemy import Integer, case, func, select
+from sqlalchemy import Integer, case, func, literal_column, select, union_all
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import InstrumentedAttribute, selectinload
+from sqlalchemy.orm import InstrumentedAttribute, aliased, load_only, selectinload
 
 from app.core.dependencies import TmdbClient
 from app.tv.exceptions import (
@@ -16,16 +16,18 @@ from app.tv.exceptions import (
     TmdbClientError,
 )
 from app.tv.models import (
+    ActivityLog,
     Actor,
     Creator,
     CreatorCredit,
     Episode,
-    EpisodeLog,
+    LogType,
     Role,
     Season,
     Show,
 )
 from app.tv.schemas import (
+    ActivityLogRequest,
     SeasonCreate,
     ShowCreate,
     ShowSearchRequest,
@@ -38,19 +40,54 @@ async def get_show(
 ) -> Show:
     eps_per_season = func.count(Episode.id.distinct()).label('eps_per_season')
 
-    logged_eps_per_season = func.count(EpisodeLog.episode_id.distinct()).label(
-        'logged_eps_per_season'
+    show_log = aliased(ActivityLog)
+    show_log_exists = (
+        select(literal_column('1'))
+        .where(
+            show_log.user_id == user.id,
+            show_log.log_type == LogType.SHOW,
+            show_log.show_id == Show.id,
+        )
+        .correlate(Show)
+        .exists()
     )
+
+    season_log = aliased(ActivityLog)
+    season_log_exists = (
+        select(literal_column('1'))
+        .where(
+            season_log.user_id == user.id,
+            season_log.log_type == LogType.SEASON,
+            season_log.season_id == Season.id,
+        )
+        .correlate(Season)
+        .exists()
+    )
+
+    episode_log = aliased(ActivityLog)
+    episodes_logged = (
+        select(func.count(episode_log.id))
+        .join(Episode, episode_log.episode_id == Episode.id)
+        .where(
+            episode_log.user_id == user.id,
+            episode_log.log_type == LogType.EPISODE,
+            Episode.season_id == Season.id,
+        )
+        .correlate(Season)
+        .scalar_subquery()
+    )
+
+    logged_eps_per_season = case(
+        (show_log_exists, eps_per_season),
+        (season_log_exists, eps_per_season),
+        else_=episodes_logged,
+    ).label('logged_eps_per_season')
 
     query = (
         select(Show, Season.id, Season.name, logged_eps_per_season, eps_per_season)
         .options(selectinload(Show.show_creators).selectinload(CreatorCredit.creator))
         .join(Show.seasons)
         .join(Season.episodes)
-        .outerjoin(
-            EpisodeLog,
-            ((EpisodeLog.episode_id == Episode.id) & (EpisodeLog.user_id == user.id)),
-        )
         .where(Season.show_id == show_id)
         .group_by(Show.id, Season.id)
         .order_by(Show.name, *(await sort_collection(Season.name)))
@@ -155,9 +192,50 @@ async def get_show(
 async def get_season(
     db: AsyncSession, user: User, season_id: int, view: str | None
 ) -> Season | list[dict]:
-    is_logged = case((func.max(EpisodeLog.id).isnot(None), True), else_=False).label(
-        'is_logged'
+    episode_log = aliased(ActivityLog)
+    season_log = aliased(ActivityLog)
+    show_log = aliased(ActivityLog)
+
+    episode_log_exists = (
+        select(literal_column('1'))
+        .where(
+            episode_log.user_id == user.id,
+            episode_log.log_type == LogType.EPISODE,
+            episode_log.episode_id == Episode.id,
+        )
+        .correlate(Episode)
+        .exists()
     )
+
+    season_log_exists = (
+        select(literal_column('1'))
+        .where(
+            season_log.user_id == user.id,
+            season_log.log_type == LogType.SEASON,
+            season_log.season_id == Season.id,
+        )
+        .correlate(Season)
+        .exists()
+    )
+
+    show_log_exists = (
+        select(literal_column('1'))
+        .where(
+            show_log.user_id == user.id,
+            show_log.log_type == LogType.SHOW,
+            show_log.show_id == Show.id,
+        )
+        .correlate(Show)
+        .exists()
+    )
+
+    is_logged = case(
+        (episode_log_exists, True),
+        (season_log_exists, True),
+        (show_log_exists, True),
+        else_=False,
+    ).label('is_logged')
+
     select_stmt = select(Episode.id, Episode.name, is_logged)
     group_target: tuple[InstrumentedAttribute, ...] = Episode.id, Season.id
 
@@ -170,19 +248,15 @@ async def get_season(
                 *select_stmt.selected_columns,
             )
             .options(selectinload(Season.cast).selectinload(Role.actor))
-            .join(Show)
-            .join(Episode)
+            .join(Show, Show.id == Season.show_id)
+            .join(Episode, Episode.season_id == Season.id)
         )
-        group_target = (*group_target, Show.name, Show.backdrop_path)
+        group_target = (*group_target, Show.id, Show.name, Show.backdrop_path)
     elif view == 'progress':
         select_stmt = select_stmt.join(Episode.season)
 
     stmt = (
-        select_stmt.outerjoin(
-            EpisodeLog,
-            ((EpisodeLog.episode_id == Episode.id) & (EpisodeLog.user_id == user.id)),
-        )
-        .where(Season.id == season_id)
+        select_stmt.where(Season.id == season_id)
         .group_by(*group_target)
         .order_by(Episode.episode_number)
     )
@@ -204,9 +278,49 @@ async def get_season(
 
 
 async def get_episode(db: AsyncSession, user: User, episode_id: int) -> Episode:
-    is_logged = case((func.max(EpisodeLog.id).isnot(None), True), else_=False).label(
-        'is_logged'
+    episode_log = aliased(ActivityLog)
+    season_log = aliased(ActivityLog)
+    show_log = aliased(ActivityLog)
+
+    episode_log_exists = (
+        select(literal_column('1'))
+        .where(
+            episode_log.user_id == user.id,
+            episode_log.log_type == LogType.EPISODE,
+            episode_log.episode_id == Episode.id,
+        )
+        .correlate(Episode)
+        .exists()
     )
+
+    season_log_exists = (
+        select(literal_column('1'))
+        .where(
+            season_log.user_id == user.id,
+            season_log.log_type == LogType.SEASON,
+            season_log.season_id == Season.id,
+        )
+        .correlate(Season)
+        .exists()
+    )
+
+    show_log_exists = (
+        select(literal_column('1'))
+        .where(
+            show_log.user_id == user.id,
+            show_log.log_type == LogType.SHOW,
+            show_log.show_id == Show.id,
+        )
+        .correlate(Show)
+        .exists()
+    )
+
+    is_logged = case(
+        (episode_log_exists, True),
+        (season_log_exists, True),
+        (show_log_exists, True),
+        else_=False,
+    ).label('is_logged')
 
     stmt = (
         select(
@@ -220,13 +334,10 @@ async def get_episode(db: AsyncSession, user: User, episode_id: int) -> Episode:
         .join(Season, Season.id == Episode.season_id)
         .join(Show, Show.id == Season.show_id)
         .options(selectinload(Episode.guest_stars).selectinload(Role.actor))
-        .outerjoin(
-            EpisodeLog,
-            ((EpisodeLog.episode_id == Episode.id) & (EpisodeLog.user_id == user.id)),
-        )
         .where(Episode.id == episode_id)
         .group_by(
             Episode.id,
+            Season.id,
             Season.name,
             Season.poster_path,
             Show.id,
@@ -262,40 +373,319 @@ async def search_tmdb_show(tmdb_client: TmdbClient, query: ShowSearchRequest):
     return results
 
 
-async def log_episode(
-    db: AsyncSession, user: User, episode_id: int, logged_at: datetime | None
-) -> EpisodeLog:
-    stmt = select(Episode).where(Episode.id == episode_id)
-
-    try:
-        episode_in_db = (await db.execute(stmt)).scalar_one()
-    except NoResultFound:
-        raise EpisodeNotFound(episode_id=episode_id)
-
-    episode_log = EpisodeLog(user=user, episode=episode_in_db, logged_at=logged_at)
-    db.add(episode_log)
-    await db.commit()
-    episode_log.episode_name = episode_log.episode.name
-    return episode_log
-
-
-async def get_current_user_log(db: AsyncSession, user: User):
-    stmt = (
-        select(
-            EpisodeLog.logged_at.label('logged_at'),
-            Episode.name.label('episode_name'),
-            Season.name.label('season_name'),
-            Show.name.label('show_name'),
+async def log_activity(
+    db: AsyncSession,
+    user: User,
+    log_request: ActivityLogRequest,
+) -> ActivityLog:
+    if log_request.episode_id:
+        log_type = LogType.EPISODE
+        try:
+            episode_in_db = (
+                await db.execute(
+                    select(Episode).where(Episode.id == log_request.episode_id)
+                )
+            ).scalar_one()
+        except NoResultFound:
+            raise EpisodeNotFound(episode_id=log_request.episode_id)
+    elif log_request.season_id:
+        log_type = LogType.SEASON
+        season_in_db = (
+            (
+                await db.execute(
+                    select(Season)
+                    .options(
+                        selectinload(Season.episodes).options(load_only(Episode.id))
+                    )
+                    .where(Season.id == log_request.season_id)
+                )
+            )
+            .scalars()
+            .first()
         )
-        .join(Episode, EpisodeLog.episode_id == Episode.id)
+        if not season_in_db:
+            raise SeasonNotFound(season_id=log_request.season_id)
+        episode_ids = [episode.id for episode in season_in_db.episodes]
+    elif log_request.show_id:
+        log_type = LogType.SHOW
+        show_in_db = (
+            (
+                await db.execute(
+                    select(Show)
+                    .options(
+                        selectinload(Show.seasons).options(load_only(Season.id)),
+                        selectinload(Show.seasons)
+                        .selectinload(Season.episodes)
+                        .options(load_only(Episode.id)),
+                    )
+                    .where(Show.id == log_request.show_id),
+                )
+            )
+            .scalars()
+            .first()
+        )
+        if not show_in_db:
+            raise ShowNotFound(show_id=log_request.show_id)
+        season_ids = [season.id for season in show_in_db.seasons]
+        episode_ids = [
+            episode.id for season in show_in_db.seasons for episode in season.episodes
+        ]
+
+    activity_log = ActivityLog(
+        user=user,
+        episode=episode_in_db if log_request.episode_id else None,
+        season=season_in_db if log_request.season_id else None,
+        show=show_in_db if log_request.show_id else None,
+        logged_at=log_request.logged_at,
+        log_type=log_type,
+    )
+    db.add(activity_log)
+    await db.commit()
+
+    if log_type == LogType.EPISODE:
+        activity_log.episode_name = episode_in_db.name
+    elif log_type == LogType.SEASON and season_in_db:
+        activity_log.season_name = season_in_db.name
+        activity_log.mutated_episodes = episode_ids
+    elif log_type == LogType.SHOW and show_in_db:
+        activity_log.show_name = show_in_db.name
+        activity_log.mutated_seasons = season_ids
+        activity_log.mutated_episodes = episode_ids
+    return activity_log
+
+
+async def get_activity(
+    db: AsyncSession, user: User, view: Literal['episodes', 'seasons', 'shows'] | None
+):
+    if view == 'episodes':
+        return await get_episode_logs(db, user)
+    elif view == 'seasons':
+        return await get_season_logs(db, user)
+    elif view == 'shows':
+        return await get_show_logs(db, user)
+    else:
+        raise ValueError(
+            "Invalid view type. Must be 'episodes', 'seasons', or 'shows'."
+        )
+
+
+async def get_episode_logs(db: AsyncSession, user: User):
+    episodes_logged = (
+        select(
+            ActivityLog.logged_at.label('logged_at'),
+            Episode.id.label('episode_id'),
+            Episode.name.label('episode_name'),
+            Episode.episode_number.label('episode_number'),
+            Season.id.label('season_id'),
+            Season.name.label('season_name'),
+            Show.id.label('show_id'),
+            Show.name.label('show_name'),
+            Show.poster_path.label('show_poster_path'),
+        )
+        .join(Episode, ActivityLog.episode_id == Episode.id)
         .join(Season, Season.id == Episode.season_id)
         .join(Show, Show.id == Season.show_id)
-        .where(EpisodeLog.user_id == user.id)
-        .order_by(EpisodeLog.logged_at.desc())
-        .limit(10)
+        .where(ActivityLog.user_id == user.id, ActivityLog.log_type == LogType.EPISODE)
     )
-    results = (await db.execute(stmt)).all()
 
+    seasons_logged_as_episodes = (
+        select(
+            ActivityLog.logged_at.label('logged_at'),
+            Episode.id.label('episode_id'),
+            Episode.name.label('episode_name'),
+            Episode.episode_number.label('episode_number'),
+            Season.id.label('season_id'),
+            Season.name.label('season_name'),
+            Show.id.label('show_id'),
+            Show.name.label('show_name'),
+            Show.poster_path.label('show_poster_path'),
+        )
+        .join(Season, ActivityLog.season_id == Season.id)
+        .join(Episode, Episode.season_id == Season.id)
+        .join(Show, Show.id == Season.show_id)
+        .where(ActivityLog.user_id == user.id, ActivityLog.log_type == LogType.SEASON)
+    )
+
+    shows_logged_as_episodes = (
+        select(
+            ActivityLog.logged_at.label('logged_at'),
+            Episode.id.label('episode_id'),
+            Episode.name.label('episode_name'),
+            Episode.episode_number.label('episode_number'),
+            Season.id.label('season_id'),
+            Season.name.label('season_name'),
+            Show.id.label('show_id'),
+            Show.name.label('show_name'),
+            Show.poster_path.label('show_poster_path'),
+        )
+        .join(Show, ActivityLog.show_id == Show.id)
+        .join(Season, Season.show_id == Show.id)
+        .join(Episode, Episode.season_id == Season.id)
+        .where(ActivityLog.user_id == user.id, ActivityLog.log_type == LogType.SHOW)
+    )
+
+    union_stmt = (
+        union_all(episodes_logged, seasons_logged_as_episodes, shows_logged_as_episodes)
+    ).subquery()
+
+    stmt = (
+        select(union_stmt)
+        .order_by(
+            union_stmt.c.logged_at.desc(),
+            union_stmt.c.episode_number.desc(),
+        )
+        .limit(100)
+    )
+
+    results = (await db.execute(stmt)).all()
+    return results
+
+
+async def get_season_logs(db: AsyncSession, user: User):
+    episodes_logged_as_seasons = (
+        select(
+            ActivityLog.logged_at.label('logged_at'),
+            Season.id.label('season_id'),
+            Season.name.label('season_name'),
+            Show.id.label('show_id'),
+            Show.name.label('show_name'),
+            Show.poster_path.label('show_poster_path'),
+        )
+        .join(Episode, ActivityLog.episode_id == Episode.id)
+        .join(Season, Episode.season_id == Season.id)
+        .join(Show, Show.id == Season.show_id)
+        .where(ActivityLog.user_id == user.id, ActivityLog.log_type == LogType.EPISODE)
+    )
+
+    seasons_logged = (
+        select(
+            ActivityLog.logged_at.label('logged_at'),
+            Season.id.label('season_id'),
+            Season.name.label('season_name'),
+            Show.id.label('show_id'),
+            Show.name.label('show_name'),
+            Show.poster_path.label('show_poster_path'),
+        )
+        .join(Season, ActivityLog.season_id == Season.id)
+        .join(Show, Show.id == Season.show_id)
+        .where(ActivityLog.user_id == user.id, ActivityLog.log_type == LogType.SEASON)
+    )
+
+    shows_logged_as_seasons = (
+        select(
+            ActivityLog.logged_at.label('logged_at'),
+            Season.id.label('season_id'),
+            Season.name.label('season_name'),
+            Show.id.label('show_id'),
+            Show.name.label('show_name'),
+            Show.poster_path.label('show_poster_path'),
+        )
+        .join(Show, ActivityLog.show_id == Show.id)
+        .join(Season, Season.show_id == Show.id)
+        .where(ActivityLog.user_id == user.id, ActivityLog.log_type == LogType.SHOW)
+    )
+
+    union_stmt = (
+        union_all(seasons_logged, episodes_logged_as_seasons, shows_logged_as_seasons)
+    ).subquery()
+
+    most_recent_stmt = (
+        select(
+            union_stmt.c.logged_at,
+            union_stmt.c.season_id,
+            union_stmt.c.season_name,
+            union_stmt.c.show_id,
+            union_stmt.c.show_name,
+            union_stmt.c.show_poster_path,
+            func.row_number()
+            .over(
+                partition_by=union_stmt.c.season_id,
+                order_by=union_stmt.c.logged_at.desc(),
+            )
+            .label('row_num'),
+        )
+    ).subquery()
+
+    stmt = (
+        select(most_recent_stmt)
+        .where(most_recent_stmt.c.row_num == 1)
+        .order_by(
+            most_recent_stmt.c.logged_at.desc(),
+            *(await sort_collection(most_recent_stmt.c.season_name)),
+        )
+        .limit(100)
+    )
+
+    results = (await db.execute(stmt)).all()
+    return results
+
+
+async def get_show_logs(db: AsyncSession, user: User):
+    episode_log = aliased(Episode)
+    season_for_episode_log = aliased(Season)
+    show_for_episode_log = aliased(Show)
+
+    season_log = aliased(Season)
+    show_for_season_log = aliased(Show)
+
+    show_log = aliased(Show)
+
+    show_id_case = case(
+        (ActivityLog.log_type == LogType.SHOW, show_log.id),
+        (ActivityLog.log_type == LogType.SEASON, show_for_season_log.id),
+        (ActivityLog.log_type == LogType.EPISODE, show_for_episode_log.id),
+    )
+
+    subquery = (
+        select(
+            ActivityLog.logged_at.label('logged_at'),
+            show_id_case.label('show_id'),
+            case(
+                (ActivityLog.log_type == LogType.SHOW, show_log.name),
+                (ActivityLog.log_type == LogType.SEASON, show_for_season_log.name),
+                (ActivityLog.log_type == LogType.EPISODE, show_for_episode_log.name),
+            ).label('show_name'),
+            case(
+                (ActivityLog.log_type == LogType.SHOW, show_log.poster_path),
+                (
+                    ActivityLog.log_type == LogType.SEASON,
+                    show_for_season_log.poster_path,
+                ),
+                (
+                    ActivityLog.log_type == LogType.EPISODE,
+                    show_for_episode_log.poster_path,
+                ),
+                else_=None,
+            ).label('show_poster_path'),
+            func.row_number()
+            .over(
+                partition_by=show_id_case,
+                order_by=ActivityLog.logged_at.desc(),
+            )
+            .label('row_num'),
+        )
+        .outerjoin(show_log, ActivityLog.show_id == show_log.id)
+        .outerjoin(season_log, ActivityLog.season_id == season_log.id)
+        .outerjoin(show_for_season_log, season_log.show_id == show_for_season_log.id)
+        .outerjoin(episode_log, ActivityLog.episode_id == episode_log.id)
+        .outerjoin(
+            season_for_episode_log, episode_log.season_id == season_for_episode_log.id
+        )
+        .outerjoin(
+            show_for_episode_log,
+            season_for_episode_log.show_id == show_for_episode_log.id,
+        )
+        .where(ActivityLog.user_id == user.id)
+    ).subquery()
+
+    stmt = (
+        select(subquery)
+        .where(literal_column('row_num') == 1)
+        .order_by(literal_column('logged_at').desc())
+        .limit(100)
+    )
+
+    results = (await db.execute(stmt)).all()
     return results
 
 

@@ -8,7 +8,7 @@ import {
   getEpisodeQueryKey,
   getSeasonQueryKey,
   getShowQueryKey,
-  logEpisodeMutation,
+  logActivityMutation,
 } from '#/client/@tanstack/react-query.gen';
 import { Banner } from './banner';
 import { CreativeCard, CreativeScroller } from './creative-card';
@@ -23,7 +23,7 @@ export function EpisodeDetails() {
   );
 
   const logMutation = useMutation({
-    ...logEpisodeMutation(),
+    ...logActivityMutation(),
     onSuccess: (log_data) => {
       log_data.logged_at &&
         toast.success(
@@ -50,7 +50,7 @@ export function EpisodeDetails() {
   });
 
   const handleClick = () => {
-    logMutation.mutate({ path: { episode_id: Number(id) } });
+    logMutation.mutate({ body: { episode_id: Number(id) } });
   };
 
   const guestStars = episodeData.guest_stars.map((item) => (

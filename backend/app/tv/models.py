@@ -1,3 +1,4 @@
+import enum
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
@@ -5,6 +6,7 @@ from sqlalchemy import (
     ARRAY,
     CheckConstraint,
     DateTime,
+    Enum,
     ForeignKey,
     String,
     UniqueConstraint,
@@ -99,16 +101,36 @@ class Episode(Base):
     )
 
 
-class EpisodeLog(Base):
-    __tablename__ = 'episode_logs'
+class LogType(enum.Enum):
+    EPISODE = "episode"
+    SEASON = "season"
+    SHOW = "show"
+
+
+class ActivityLog(Base):
+    __tablename__ = 'activity_logs'
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
-    episode_id: Mapped[int] = mapped_column(ForeignKey('episodes.id'))
     logged_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+    log_type: Mapped[LogType] = mapped_column(Enum(LogType), nullable=False)
+    episode_id: Mapped[int] = mapped_column(ForeignKey('episodes.id'), nullable=True)
+    season_id: Mapped[int] = mapped_column(ForeignKey('seasons.id'), nullable=True)
+    show_id: Mapped[int] = mapped_column(ForeignKey('shows.id'), nullable=True)
     episode: Mapped['Episode'] = relationship()
+    season: Mapped['Season'] = relationship()
+    show: Mapped['Show'] = relationship()
     user: Mapped['User'] = relationship()
+
+    __table_args__ = (
+        CheckConstraint(
+            "(episode_id IS NOT NULL AND season_id IS NULL AND show_id IS NULL) OR "
+            "(episode_id IS NULL AND season_id IS NOT NULL AND show_id IS NULL) OR "
+            "(episode_id IS NULL AND season_id IS NULL AND show_id IS NOT NULL)",
+            name="check_exactly_one_type_id_nonnull",
+        ),
+    )
 
 
 class Actor(Base):
